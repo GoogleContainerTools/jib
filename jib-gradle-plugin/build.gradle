@@ -60,17 +60,20 @@ release {
     requireBranch = /^gradle-release-v\\d+.*$/  //regex
   }
 }
-
-gradlePlugin {
+// Gradle Plugin Portal releases
+pluginBundle {
   website = 'https://github.com/GoogleContainerTools/jib/'
   vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+}
+
+gradlePlugin {
   testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
       displayName = 'Jib'
       description = 'Containerize your Java application'
-      tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
     }
   }

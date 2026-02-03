@@ -142,24 +142,23 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (isBeforeGradle9()) {
-      // Use reflection to call getSettingsFile() which was removed in Gradle 9
-      try {
-        Object startParameter = project.getGradle().getStartParameter();
-        java.lang.reflect.Method getSettingsFileMethod = 
-            startParameter.getClass().getMethod("getSettingsFile");
-        File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
-        if (settingsFile != null) {
-          skaffoldFilesOutput.addBuild(settingsFile.toPath());
-        }
-      } catch (Exception e) {
-        // Fall back to default settings file location
-        if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-          skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
-        }
+    // Use reflection to call getSettingsFile() for compatibility with both Gradle 6 and 9
+    // (getSettingsFile() was removed in Gradle 9)
+    try {
+      Object startParameter = project.getGradle().getStartParameter();
+      java.lang.reflect.Method getSettingsFileMethod =
+          startParameter.getClass().getMethod("getSettingsFile");
+      File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
+      if (settingsFile != null) {
+        skaffoldFilesOutput.addBuild(settingsFile.toPath());
+      } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+        skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
       }
-    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+    } catch (Exception e) {
+      // Fall back to default settings file location if reflection fails
+      if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+        skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+      }
     }
 
     // Add gradle.properties
@@ -238,39 +237,30 @@ public class FilesTaskV2 extends DefaultTask {
   /**
    * Resolves a {@link ProjectDependency} to its corresponding {@link Project} instance.
    *
-   * <p>This method handles the removal of {@code ProjectDependency.getDependencyProject()} in
-   * Gradle 9.0 by falling back to {@code getPath()} and resolving it via the project hierarchy.
+   * <p>Uses reflection to handle both Gradle 6 (getDependencyProject()) and Gradle 9+ (getPath()).
    *
    * @param projectDependency the project dependency to resolve
    * @return the resolved project
    * @throws RuntimeException if the dependent project could not be resolved
    */
   private Project getDependentProject(ProjectDependency projectDependency) {
-    if (isBeforeGradle9()) {
-      // Use reflection to call getDependencyProject() which was removed in Gradle 9
-      try {
-        java.lang.reflect.Method getDependencyProjectMethod = 
-            projectDependency.getClass().getMethod("getDependencyProject");
-        return (Project) getDependencyProjectMethod.invoke(projectDependency);
-      } catch (Exception e) {
-        // Fall through to getPath() approach
-      }
-    }
+    // Try getDependencyProject() first (Gradle 6-8)
     try {
-      String path =
-          (String) projectDependency.getClass().getMethod("getPath").invoke(projectDependency);
-      return getProject().project(path);
-    } catch (ReflectiveOperationException ex) {
-      throw new RuntimeException("Failed to get dependent project from " + projectDependency, ex);
+      java.lang.reflect.Method getDependencyProjectMethod =
+          projectDependency.getClass().getMethod("getDependencyProject");
+      return (Project) getDependencyProjectMethod.invoke(projectDependency);
+    } catch (Exception e) {
+      // Fall through to getPath() approach (Gradle 9+)
     }
-  }
 
-  /**
-   * Checks if the current Gradle version is older than 9.0.
-   *
-   * @return {@code true} if the current Gradle version is less than 9.0, {@code false} otherwise
-   */
-  private static boolean isBeforeGradle9() {
-    return GradleVersion.current().compareTo(GRADLE_9) < 0;
+    // Try getPath() approach (Gradle 9+)
+    try {
+      java.lang.reflect.Method getPathMethod = projectDependency.getClass().getMethod("getPath");
+      String path = (String) getPathMethod.invoke(projectDependency);
+      return getProject().project(path);
+    } catch (Exception ex) {
+      throw new RuntimeException(
+          "Failed to resolve dependent project from " + projectDependency, ex);
+    }
   }
 }

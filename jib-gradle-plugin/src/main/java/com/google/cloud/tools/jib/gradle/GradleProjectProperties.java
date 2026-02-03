@@ -233,7 +233,10 @@ public class GradleProjectProperties implements ProjectProperties {
           allFiles
               .minus(classesOutputDirectories)
               .minus(projectDependencies)
-              .filter(file -> resourcesOutputDirectory == null || !file.toPath().equals(resourcesOutputDirectory));
+              .filter(
+                  file ->
+                      resourcesOutputDirectory == null
+                          || !file.toPath().equals(resourcesOutputDirectory));
 
       FileCollection snapshotDependencies =
           nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));

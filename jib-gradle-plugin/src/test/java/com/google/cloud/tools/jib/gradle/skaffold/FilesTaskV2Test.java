@@ -30,9 +30,11 @@ import javax.annotation.Nullable;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
+import org.gradle.util.GradleVersion;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -195,6 +197,11 @@ public class FilesTaskV2Test {
 
   @Test
   public void testFilesTask_multiProjectComplexService_gradle9() throws IOException {
+    // Skip this test if not running with Gradle 9+
+    Assume.assumeTrue(
+        "Test requires Gradle 9+",
+        GradleVersion.current().compareTo(GradleVersion.version("9.0")) >= 0);
+
     Path projectRoot = multiTestProjectGradle9.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
