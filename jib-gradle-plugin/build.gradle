@@ -59,7 +59,7 @@ release {
     'com.google.cloud.tools:jib-plugins-common',
   ]
   git {
-    requireBranch = /^gradle-release-v\d+.*$/ //regex
+    requireBranch = /^gradle-release-v\d+.*$/  //regex
   }
 }
 
