@@ -128,7 +128,6 @@ public class FilesTaskV2Test {
 
   @Test
   public void testFilesTask_multiProjectComplexService() throws IOException {
-    System.out.println("Running testFilesTask_multiProjectComplexService" + multiTestProject.getGradleVersion());
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
