@@ -45,8 +45,10 @@ public class FilesTaskV2Test {
   public static final TestProject skaffoldTestProject = new TestProject("skaffold-config");
 
   @ClassRule
- public static final TestProject multiTestProject =
-      org.gradle.util.GradleVersion.current().compareTo(org.gradle.util.GradleVersion.version("9.0")) >= 0
+  public static final TestProject multiTestProject =
+      org.gradle.util.GradleVersion.current()
+                  .compareTo(org.gradle.util.GradleVersion.version("9.0"))
+              >= 0
           ? new TestProject("multi-service").withGradleVersion("9.0")
           : new TestProject("multi-service");
 
@@ -193,4 +195,3 @@ public class FilesTaskV2Test {
         ImmutableList.of(projectRoot.resolve("src/main/jib/bar")), result.getIgnore());
   }
 }
-
