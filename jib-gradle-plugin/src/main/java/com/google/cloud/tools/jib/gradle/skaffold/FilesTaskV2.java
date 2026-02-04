@@ -253,7 +253,7 @@ public class FilesTaskV2 extends DefaultTask {
    * @return the resolved project
    * @throws RuntimeException if the dependent project could not be resolved
    */
-    private Project getDependentProject(ProjectDependency projectDependency) {
+  private Project getDependentProject(ProjectDependency projectDependency) {
     // Try getDependencyProject() first (Gradle 6-8)
     try {
       java.lang.reflect.Method getDependencyProjectMethod =
