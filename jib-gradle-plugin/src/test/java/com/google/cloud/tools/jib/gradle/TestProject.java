@@ -56,6 +56,7 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
   private final String testProjectName;
   private String gradleVersion = JibPlugin.GRADLE_MIN_VERSION.getVersion();
+  private boolean useEnvironmentGradleVersion = false;
   private GradleRunner gradleRunner;
 
   private Path projectRoot;
@@ -76,16 +77,25 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
     projectRoot = newFolder().toPath();
     copyProject(testProjectName, projectRoot);
-
-    gradleRunner =
-        GradleRunner.create()
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(projectRoot.toFile())
-            .withPluginClasspath();
+    if (useEnvironmentGradleVersion) {
+      gradleRunner =
+          GradleRunner.create().withProjectDir(projectRoot.toFile()).withPluginClasspath();
+    } else {
+      gradleRunner =
+          GradleRunner.create()
+              .withGradleVersion(gradleVersion)
+              .withProjectDir(projectRoot.toFile())
+              .withPluginClasspath();
+    }
   }
 
   public TestProject withGradleVersion(String version) {
     gradleVersion = version;
+    return this;
+  }
+
+  public TestProject withUseEnvironmentGradleVersion() {
+    useEnvironmentGradleVersion = true;
     return this;
   }
 
