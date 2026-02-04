@@ -142,8 +142,24 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    // Use reflection to call getSettingsFile() for compatibility with both Gradle 6 and 9
-    // (getSettingsFile() was removed in Gradle 9)
+    addSettingsFile(project, projectPath);
+
+    // Add gradle.properties
+    if (Files.exists(projectPath.resolve("gradle.properties"))) {
+      skaffoldFilesOutput.addBuild(projectPath.resolve("gradle.properties"));
+    }
+  }
+
+  /**
+   * Adds the settings.gradle file for a project.
+   *
+   * <p>Uses reflection to call getSettingsFile() for compatibility with both Gradle 6 and 9
+   * (getSettingsFile() was removed in Gradle 9).
+   *
+   * @param project the project
+   * @param projectPath the project directory path
+   */
+  private void addSettingsFile(Project project, Path projectPath) {
     try {
       Object startParameter = project.getGradle().getStartParameter();
       java.lang.reflect.Method getSettingsFileMethod =
@@ -159,11 +175,6 @@ public class FilesTaskV2 extends DefaultTask {
       if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
         skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
       }
-    }
-
-    // Add gradle.properties
-    if (Files.exists(projectPath.resolve("gradle.properties"))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve("gradle.properties"));
     }
   }
 
