@@ -41,7 +41,6 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.GradleVersion;
 
 /**
  * Prints out changing source dependencies on a project.
@@ -79,9 +78,9 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add extra layer
     List<Path> extraDirectories =
-            jibExtension.getExtraDirectories().getPaths().stream()
-                    .map(ExtraDirectoryParameters::getFrom)
-                    .collect(Collectors.toList());
+        jibExtension.getExtraDirectories().getPaths().stream()
+            .map(ExtraDirectoryParameters::getFrom)
+            .collect(Collectors.toList());
     extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);
 
     // Find project dependencies
@@ -98,7 +97,7 @@ public class FilesTaskV2 extends DefaultTask {
         configurationName = "default";
       }
       for (Configuration targetConfiguration :
-              dependentProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+          dependentProject.getConfigurations().getByName(configurationName).getHierarchy()) {
         for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
           projectDependencyJars.add(artifact.getFile());
         }
@@ -107,7 +106,7 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add SNAPSHOT, non-project dependency jars
     for (File file :
-            project.getConfigurations().getByName(jibExtension.getConfigurationName().get())) {
+        project.getConfigurations().getByName(jibExtension.getConfigurationName().get())) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -162,7 +161,7 @@ public class FilesTaskV2 extends DefaultTask {
     try {
       Object startParameter = project.getGradle().getStartParameter();
       java.lang.reflect.Method getSettingsFileMethod =
-              startParameter.getClass().getMethod("getSettingsFile");
+          startParameter.getClass().getMethod("getSettingsFile");
       File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
       if (settingsFile != null) {
         skaffoldFilesOutput.addBuild(settingsFile.toPath());
@@ -189,19 +188,19 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Add sources + resources
     SourceSetContainer sourceSetContainer =
-            project.getExtensions().findByType(SourceSetContainer.class);
+        project.getExtensions().findByType(SourceSetContainer.class);
     if (sourceSetContainer != null) {
       SourceSet mainSourceSet = sourceSetContainer.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
       if (mainSourceSet != null) {
         mainSourceSet
-                .getAllSource()
-                .getSourceDirectories()
-                .forEach(
-                        sourceDirectory -> {
-                          if (sourceDirectory.exists()) {
-                            skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-                          }
-                        });
+            .getAllSource()
+            .getSourceDirectories()
+            .forEach(
+                sourceDirectory -> {
+                  if (sourceDirectory.exists()) {
+                    skaffoldFilesOutput.addInput(sourceDirectory.toPath());
+                  }
+                });
       }
     }
   }
@@ -226,7 +225,7 @@ public class FilesTaskV2 extends DefaultTask {
 
       // Search through all dependencies
       Configuration runtimeClasspath =
-              currentProject.getConfigurations().findByName(configurationName);
+          currentProject.getConfigurations().findByName(configurationName);
       if (runtimeClasspath != null) {
         for (Configuration configuration : runtimeClasspath.getHierarchy()) {
           for (Dependency dependency : configuration.getDependencies()) {
@@ -258,7 +257,7 @@ public class FilesTaskV2 extends DefaultTask {
     // Try getDependencyProject() first (Gradle 6-8)
     try {
       java.lang.reflect.Method getDependencyProjectMethod =
-              projectDependency.getClass().getMethod("getDependencyProject");
+          projectDependency.getClass().getMethod("getDependencyProject");
       return (Project) getDependencyProjectMethod.invoke(projectDependency);
     } catch (ReflectiveOperationException e) {
       // Fall through to getPath() approach (Gradle 9+)
@@ -271,7 +270,7 @@ public class FilesTaskV2 extends DefaultTask {
       return getProject().project(path);
     } catch (ReflectiveOperationException e) {
       throw new RuntimeException(
-              "Failed to resolve dependent project from " + projectDependency, e);
+          "Failed to resolve dependent project from " + projectDependency, e);
     }
   }
 }
