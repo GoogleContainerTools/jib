@@ -41,7 +41,6 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.GradleVersion;
 
 /**
  * Prints out changing source dependencies on a project.
@@ -50,8 +49,6 @@ import org.gradle.util.GradleVersion;
  * :<subproject>:_jibSkaffoldFilesV2 -q}
  */
 public class FilesTaskV2 extends DefaultTask {
-
-  private static final GradleVersion GRADLE_9 = GradleVersion.version("9.0");
 
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
@@ -160,6 +157,7 @@ public class FilesTaskV2 extends DefaultTask {
    * @param projectPath the project directory path
    */
   private void addSettingsFile(Project project, Path projectPath) {
+    boolean settingsFileAdded = false;
     try {
       Object startParameter = project.getGradle().getStartParameter();
       java.lang.reflect.Method getSettingsFileMethod =
@@ -167,14 +165,15 @@ public class FilesTaskV2 extends DefaultTask {
       File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
       if (settingsFile != null) {
         skaffoldFilesOutput.addBuild(settingsFile.toPath());
-      } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-        skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+        settingsFileAdded = true;
       }
     } catch (ReflectiveOperationException e) {
-      // Fall back to default settings file location if reflection fails
-      if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-        skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
-      }
+      // Fall through to default settings file check
+    }
+
+    // Fall back to default settings file location if not already added
+    if (!settingsFileAdded && Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
   }
 
@@ -269,9 +268,9 @@ public class FilesTaskV2 extends DefaultTask {
       java.lang.reflect.Method getPathMethod = projectDependency.getClass().getMethod("getPath");
       String path = (String) getPathMethod.invoke(projectDependency);
       return getProject().project(path);
-    } catch (ReflectiveOperationException ex) {
+    } catch (ReflectiveOperationException e) {
       throw new RuntimeException(
-          "Failed to resolve dependent project from " + projectDependency, ex);
+          "Failed to resolve dependent project from " + projectDependency, e);
     }
   }
 }
