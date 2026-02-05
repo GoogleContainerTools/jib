@@ -41,7 +41,6 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.GradleVersion;
 
 /**
  * Prints out changing source dependencies on a project.
@@ -50,8 +49,6 @@ import org.gradle.util.GradleVersion;
  * :<subproject>:_jibSkaffoldFilesV2 -q}
  */
 public class FilesTaskV2 extends DefaultTask {
-
-  private static final GradleVersion GRADLE_9 = GradleVersion.version("9.0");
 
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
@@ -91,16 +88,16 @@ public class FilesTaskV2 extends DefaultTask {
 
     Set<File> projectDependencyJars = new HashSet<>();
     for (ProjectDependency projectDependency : projectDependencies) {
-      addProjectFiles(projectDependency.getDependencyProject());
+      Project dependentProject = getDependentProject(projectDependency);
+      addProjectFiles(dependentProject);
 
       // Keep track of project dependency jars for filtering out later
       String configurationName = projectDependency.getTargetConfiguration();
       if (configurationName == null) {
         configurationName = "default";
       }
-      Project dependencyProject = projectDependency.getDependencyProject();
       for (Configuration targetConfiguration :
-          dependencyProject.getConfigurations().getByName(configurationName).getHierarchy()) {
+          dependentProject.getConfigurations().getByName(configurationName).getHierarchy()) {
         for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
           projectDependencyJars.add(artifact.getFile());
         }
@@ -142,17 +139,41 @@ public class FilesTaskV2 extends DefaultTask {
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
     // Add settings.gradle
-    if (GradleVersion.current().compareTo(GRADLE_9) < 0
-        && project.getGradle().getStartParameter().getSettingsFile() != null) {
-      skaffoldFilesOutput.addBuild(
-          project.getGradle().getStartParameter().getSettingsFile().toPath());
-    } else if (Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
-    }
+    addSettingsFile(project, projectPath);
 
     // Add gradle.properties
     if (Files.exists(projectPath.resolve("gradle.properties"))) {
       skaffoldFilesOutput.addBuild(projectPath.resolve("gradle.properties"));
+    }
+  }
+
+  /**
+   * Adds the settings.gradle file for a project.
+   *
+   * <p>Uses reflection to call getSettingsFile() for compatibility with both Gradle 6 and 9
+   * (getSettingsFile() was removed in Gradle 9).
+   *
+   * @param project the project
+   * @param projectPath the project directory path
+   */
+  private void addSettingsFile(Project project, Path projectPath) {
+    boolean settingsFileAdded = false;
+    try {
+      Object startParameter = project.getGradle().getStartParameter();
+      java.lang.reflect.Method getSettingsFileMethod =
+          startParameter.getClass().getMethod("getSettingsFile");
+      File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
+      if (settingsFile != null) {
+        skaffoldFilesOutput.addBuild(settingsFile.toPath());
+        settingsFileAdded = true;
+      }
+    } catch (ReflectiveOperationException e) {
+      // Fall through to default settings file check
+    }
+
+    // Fall back to default settings file location if not already added
+    if (!settingsFileAdded && Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
+      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
   }
 
@@ -212,7 +233,7 @@ public class FilesTaskV2 extends DefaultTask {
               // If this is a project dependency, save it
               ProjectDependency projectDependency = (ProjectDependency) dependency;
               if (!projectDependencies.contains(projectDependency)) {
-                projects.push(projectDependency.getDependencyProject());
+                projects.push(getDependentProject(projectDependency));
                 projectDependencies.add(projectDependency);
               }
             }
@@ -221,5 +242,38 @@ public class FilesTaskV2 extends DefaultTask {
       }
     }
     return projectDependencies;
+  }
+
+  /**
+   * Resolves a {@link ProjectDependency} to its corresponding {@link Project} instance.
+   *
+   * <p>Uses reflection to handle both Gradle 6 (getDependencyProject()) and Gradle 9+ (getPath()).
+   *
+   * @param projectDependency the project dependency to resolve
+   * @return the resolved project
+   * @throws RuntimeException if the dependent project could not be resolved
+   */
+  private Project getDependentProject(ProjectDependency projectDependency) {
+    // Try getDependencyProject() first (Gradle 6-8)
+    try {
+      java.lang.reflect.Method getDependencyProjectMethod =
+          projectDependency.getClass().getMethod("getDependencyProject");
+      return (Project) getDependencyProjectMethod.invoke(projectDependency);
+    } catch (NoSuchMethodException e) {
+      // Fall through to getPath() approach (Gradle 9+)
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(
+          "Failed to resolve dependent project from " + projectDependency, e);
+    }
+
+    // Try getPath() approach (Gradle 9+)
+    try {
+      java.lang.reflect.Method getPathMethod = projectDependency.getClass().getMethod("getPath");
+      String path = (String) getPathMethod.invoke(projectDependency);
+      return getProject().project(path);
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(
+          "Failed to resolve dependent project from " + projectDependency, e);
+    }
   }
 }
