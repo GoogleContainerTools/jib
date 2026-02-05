@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 ## 3.5.3
 
 ### Fixed
-- fix: _jibSkaffoldFilesV2 task fails on Gradle 9.0 [#4469](https://github.com/GoogleContainerTools/jib/issues/4469)
+- fix: _jibSkaffoldFilesV2 task fails on Gradle 9.0 ([#4469](https://github.com/GoogleContainerTools/jib/issues/4469))
 
 ## 3.5.2
 
