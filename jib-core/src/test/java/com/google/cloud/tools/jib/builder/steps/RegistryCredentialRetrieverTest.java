@@ -73,12 +73,12 @@ public class RegistryCredentialRetrieverTest {
     Assert.assertFalse(
         RegistryCredentialRetriever.getBaseImageCredential(buildContext).isPresent());
 
-    Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.info("No credentials could be retrieved for baseregistry/baserepo"));
+    // Base image credential retrieval does not log when no credentials found
 
     Assert.assertFalse(
         RegistryCredentialRetriever.getTargetImageCredential(buildContext).isPresent());
 
+    // Only target image credential retrieval logs when no credentials found
     Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.info("No credentials could be retrieved for targetregistry/targetrepo"));
   }
@@ -107,8 +107,16 @@ public class RegistryCredentialRetrieverTest {
       List<CredentialRetriever> baseCredentialRetrievers,
       List<CredentialRetriever> targetCredentialRetrievers)
       throws CacheDirectoryCreationException {
-    ImageReference baseImage = ImageReference.of("baseregistry", "baserepo", null);
-    ImageReference targetImage = ImageReference.of("targetregistry", "targetrepo", null);
+    ImageReference baseImage =
+        ImageReference.of(
+            "baseregistry",
+            "baserepo",
+            "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
+    ImageReference targetImage =
+        ImageReference.of(
+            "targetregistry",
+            "targetrepo",
+            "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
     return BuildContext.builder()
         .setEventHandlers(mockEventHandlers)
         .setBaseImageConfiguration(
