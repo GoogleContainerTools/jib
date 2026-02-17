@@ -17,32 +17,38 @@ jobs:
 
       - name: Build project
         run: |
-          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+          if [[ ! "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'version "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" not in ###.###.### format'
             exit 1
           fi
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Run Gradle release
         run: |
-          git checkout -b cli-release-v${{ github.event.inputs.release_version }}
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
+          git checkout -b cli-release-v${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+          git config user.email ${GITHUB_ACTOR}@users.noreply.github.com
+          git config user.name ${GITHUB_ACTOR}
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli-release-v0.1.0") and the new tag.
           ./gradlew jib-cli:release \
             -Prelease.useAutomaticVersion=true \
-            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+            -Prelease.releaseVersion=${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI release binaries
         run: |
-          git checkout v${{ github.event.inputs.release_version }}-cli
+          git checkout v${GITHUB_EVENT_INPUTS_RELEASE_VERSION}-cli
           ./gradlew jib-cli:instDist --stacktrace
 
           cd jib-cli/build/distributions
-          mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
-          sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
+          mv jib-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip jib-jre-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip
+          sha256sum jib-jre-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip > zip.sha256
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.6
