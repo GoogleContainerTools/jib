@@ -21,18 +21,21 @@ jobs:
 
       - name: Check input
         run: |
-          echo '* input project: "${{ github.event.inputs.project }}"'
+          echo '* input project: "${GITHUB_EVENT_INPUTS_PROJECT}"'
 
-          case ${{ github.event.inputs.project }} in
+          case ${GITHUB_EVENT_INPUTS_PROJECT} in
             build-plan|core|maven|gradle|extension-common|maven-extension|gradle-extension) ;;
-            *) echo 'invalid input project name "${{ github.event.inputs.project }}"'
+            *) echo 'invalid input project name "${GITHUB_EVENT_INPUTS_PROJECT}"'
                exit 1
                ;;
           esac
-          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+          if [[ ! "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'version "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" not in ###.###.### format'
             exit 1
           fi
+        env:
+          GITHUB_EVENT_INPUTS_PROJECT: ${{ github.event.inputs.project }}
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Build project
         run: |
@@ -41,22 +44,25 @@ jobs:
 
       - name: Run Gradle release
         run: |
-          git checkout -b ${{ github.event.inputs.project }}-release-v${{ github.event.inputs.release_version }}
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
+          git checkout -b ${GITHUB_EVENT_INPUTS_PROJECT}-release-v${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+          git config user.email ${GITHUB_ACTOR}@users.noreply.github.com
+          git config user.name ${GITHUB_ACTOR}
 
-          PROJECT=$( case ${{ github.event.inputs.project }} in
+          PROJECT=$( case ${GITHUB_EVENT_INPUTS_PROJECT} in
             extension-common) echo jib-plugins-extension-common ;;
             maven-extension)  echo jib-maven-plugin-extension-api ;;
             gradle-extension) echo jib-gradle-plugin-extension-api ;;
-            maven|gradle)     echo jib-${{ github.event.inputs.project }}-plugin ;;
-            *)                echo jib-${{ github.event.inputs.project }} ;;
+            maven|gradle)     echo jib-${GITHUB_EVENT_INPUTS_PROJECT}-plugin ;;
+            *)                echo jib-${GITHUB_EVENT_INPUTS_PROJECT} ;;
           esac )
           # This creates the tag (e.g., "v0.1.0-gradle") and pushes the updated
           # branch (e.g., "gradle-release-v0.1.0") and the new tag.
           ./gradlew "${PROJECT}":release \
             -Prelease.useAutomaticVersion=true \
-            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+            -Prelease.releaseVersion=${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+        env:
+          GITHUB_EVENT_INPUTS_PROJECT: ${{ github.event.inputs.project }}
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Create pull request
         uses: repo-sync/pull-request@v2.12.1
