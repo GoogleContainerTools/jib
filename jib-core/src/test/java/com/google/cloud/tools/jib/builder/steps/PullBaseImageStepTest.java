@@ -54,6 +54,7 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -94,6 +95,10 @@ public class PullBaseImageStepTest {
     Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
     Mockito.when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
+    Mockito.when(registryClientFactory.setCredential(Mockito.any()))
+        .thenReturn(registryClientFactory);
+    Mockito.when(registryClientFactory.setUnauthorizedExceptionHandlerSupplier(Mockito.any()))
+        .thenReturn(registryClientFactory);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
     Mockito.when(buildContext.getContainerConfiguration()).thenReturn(containerConfig);
     Mockito.when(containerConfig.getPlatforms())
@@ -101,6 +106,7 @@ public class PullBaseImageStepTest {
     Mockito.when(progressDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressDispatcher);
     Mockito.when(progressDispatcher.newChildProducer()).thenReturn(progressDispatcherFactory);
+    Mockito.when(imageConfiguration.getCredentialRetrievers()).thenReturn(ImmutableList.of());
 
     pullBaseImageStep = new PullBaseImageStep(buildContext, progressDispatcherFactory);
   }
@@ -678,6 +684,10 @@ public class PullBaseImageStepTest {
     manifest.setContainerConfiguration(1234, digest);
 
     RegistryClient.Factory clientFactory = Mockito.mock(RegistryClient.Factory.class);
+    Mockito.doCallRealMethod().when(clientFactory).setCredential(Mockito.any());
+    Mockito.doCallRealMethod()
+        .when(clientFactory)
+        .setUnauthorizedExceptionHandlerSupplier(Mockito.any());
     RegistryClient client = Mockito.mock(RegistryClient.class);
     Mockito.when(clientFactory.newRegistryClient()).thenReturn(client);
     Mockito.when(client.pullManifest(Mockito.any()))
@@ -709,6 +719,10 @@ public class PullBaseImageStepTest {
     manifest.setContainerConfiguration(1234, digest);
 
     RegistryClient.Factory clientFactory = Mockito.mock(RegistryClient.Factory.class);
+    Mockito.doCallRealMethod().when(clientFactory).setCredential(Mockito.any());
+    Mockito.doCallRealMethod()
+        .when(clientFactory)
+        .setUnauthorizedExceptionHandlerSupplier(Mockito.any());
     RegistryClient client = Mockito.mock(RegistryClient.class);
     Mockito.when(clientFactory.newRegistryClient()).thenReturn(client);
     Mockito.when(client.pullManifest(eq("sha256:aaaaaaa")))
