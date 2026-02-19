@@ -19,6 +19,9 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.PlatformDependentLayer;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -33,6 +36,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
@@ -46,24 +50,61 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       BuildContext buildContext, ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    List<FileEntriesLayer> layerConfigurations = buildContext.getLayerConfigurations();
+    List<? extends LayerObject> layerConfigurations = buildContext.getLayerConfigurations();
+    int fileLayerCount = 0;
+    for (LayerObject layerConfiguration : layerConfigurations) {
+      if (layerConfiguration instanceof FileEntriesLayer) {
+        fileLayerCount++;
+      } else if (layerConfiguration instanceof PlatformDependentLayer) {
+        fileLayerCount += ((PlatformDependentLayer) layerConfiguration).getEntries().size();
+      }
+    }
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "launching application layer builders", layerConfigurations.size());
+                "launching application layer builders", fileLayerCount);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildContext.getEventHandlers(), "Preparing application layer builders")) {
       return layerConfigurations.stream()
           // Skips the layer if empty.
-          .filter(layerConfiguration -> !layerConfiguration.getEntries().isEmpty())
-          .map(
-              layerConfiguration ->
-                  new BuildAndCacheApplicationLayerStep(
-                      buildContext,
-                      progressEventDispatcher.newChildProducer(),
-                      layerConfiguration.getName(),
-                      layerConfiguration))
+          .filter(
+              layerConfiguration -> {
+                if (layerConfiguration instanceof FileEntriesLayer) {
+                  return !((FileEntriesLayer) layerConfiguration).getEntries().isEmpty();
+                } else if (layerConfiguration instanceof PlatformDependentLayer) {
+                  return !((PlatformDependentLayer) layerConfiguration).getEntries().isEmpty();
+                }
+                return true;
+              })
+          .flatMap(
+              layerConfiguration -> {
+                if (layerConfiguration instanceof FileEntriesLayer) {
+                  return Stream.of(
+                      new BuildAndCacheApplicationLayerStep(
+                          buildContext,
+                          progressEventDispatcher.newChildProducer(),
+                          layerConfiguration.getName(),
+                          (FileEntriesLayer) layerConfiguration,
+                          new Platform("amd64", "linux")));
+                } else if (layerConfiguration instanceof PlatformDependentLayer) {
+                  return ((PlatformDependentLayer) layerConfiguration)
+                      .getEntries().entrySet().stream()
+                          .map(
+                              entry -> {
+                                FileEntriesLayer fileLayer = entry.getValue();
+                                return new BuildAndCacheApplicationLayerStep(
+                                    buildContext,
+                                    progressEventDispatcher.newChildProducer(),
+                                    fileLayer.getName(),
+                                    fileLayer,
+                                    entry.getKey());
+                              });
+                } else {
+                  throw new UnsupportedOperationException(
+                      "Unsupported LayerObject type " + layerConfiguration.getType());
+                }
+              })
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -73,16 +114,19 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
   private final String layerName;
   private final FileEntriesLayer layerConfiguration;
+  private final Platform layerPlatform;
 
   private BuildAndCacheApplicationLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String layerName,
-      FileEntriesLayer layerConfiguration) {
+      FileEntriesLayer layerConfiguration,
+      Platform layerPlatform) {
     this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layerName = layerName;
     this.layerConfiguration = layerConfiguration;
+    this.layerPlatform = layerPlatform;
   }
 
   @Override
@@ -101,7 +145,10 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
       // Don't build the layer if it exists already.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerEntries);
       if (optionalCachedLayer.isPresent()) {
-        return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
+        return new PreparedLayer.Builder(optionalCachedLayer.get())
+            .setName(layerName)
+            .setPlatform(layerPlatform)
+            .build();
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerEntries).build();
@@ -109,7 +156,10 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
-      return new PreparedLayer.Builder(cachedLayer).setName(layerName).build();
+      return new PreparedLayer.Builder(cachedLayer)
+          .setName(layerName)
+          .setPlatform(layerPlatform)
+          .build();
     }
   }
 }

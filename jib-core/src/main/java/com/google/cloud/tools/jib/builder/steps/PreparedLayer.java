@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
+import javax.annotation.Nullable;
 
 /**
  * Layer prepared from {@link BuildAndCacheApplicationLayerStep} and {@link
@@ -39,6 +42,7 @@ class PreparedLayer implements Layer {
     private Layer layer;
     private String name = "unnamed layer";
     private StateInTarget stateInTarget = StateInTarget.UNKNOWN;
+    @Nullable private Platform platform;
 
     Builder(Layer layer) {
       this.layer = layer;
@@ -55,19 +59,28 @@ class PreparedLayer implements Layer {
       return this;
     }
 
+    /** Sets the platform this layer is associated with. */
+    Builder setPlatform(@Nullable Platform platform) {
+      this.platform = platform;
+      return this;
+    }
+
     PreparedLayer build() {
-      return new PreparedLayer(layer, name, stateInTarget);
+      return new PreparedLayer(layer, name, stateInTarget, platform);
     }
   }
 
   private final Layer layer;
   private final String name;
   private final StateInTarget stateInTarget;
+  @Nullable private final Platform platform;
 
-  private PreparedLayer(Layer layer, String name, StateInTarget stateInTarget) {
+  private PreparedLayer(
+      Layer layer, String name, StateInTarget stateInTarget, @Nullable Platform platform) {
     this.layer = layer;
     this.name = name;
     this.stateInTarget = stateInTarget;
+    this.platform = platform;
   }
 
   String getName() {
@@ -91,5 +104,16 @@ class PreparedLayer implements Layer {
   @Override
   public DescriptorDigest getDiffId() {
     return layer.getDiffId();
+  }
+
+  @Nullable
+  public Platform getPlatform() {
+    return platform;
+  }
+
+  public boolean appliesTo(Image baseImage) {
+    return platform == null
+        || (baseImage.getArchitecture().equals(platform.getArchitecture())
+            && baseImage.getOs().equals(platform.getOs()));
   }
 }
