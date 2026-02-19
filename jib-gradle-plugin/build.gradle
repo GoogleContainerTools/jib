@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 plugins {
   id 'java-gradle-plugin'
   id 'net.researchgate.release'
@@ -51,7 +53,7 @@ dependencies {
 /* RELEASE */
 // Prepare release
 release {
-  tagTemplate = 'v$version-gradle'
+  tagTemplate = 'v$version-gradle-plugin'
   ignoredSnapshotDependencies = [
     'com.google.cloud.tools:jib-core',
     'com.google.cloud.tools:jib-plugins-common',
@@ -60,20 +62,32 @@ release {
     requireBranch = /^gradle-release-v\d+.*$/  //regex
   }
 }
-// Gradle Plugin Portal releases
-pluginBundle {
-  website = 'https://github.com/GoogleContainerTools/jib/'
-  vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
-  tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+
+// Gradle Plugin Portal releases - conditional based on Gradle version
+if (GradleVersion.current() < GradleVersion.version('9.0')) {
+  // Gradle 6.x uses pluginBundle
+  pluginBundle {
+    website = 'https://github.com/GoogleContainerTools/jib/'
+    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+    tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+  }
 }
 
 gradlePlugin {
+  // Gradle 9+ uses these properties directly in gradlePlugin
+  if (GradleVersion.current() >= GradleVersion.version('9.0')) {
+    website = 'https://github.com/GoogleContainerTools/jib/'
+    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+  }
   testSourceSets sourceSets.integrationTest, sourceSets.test
   plugins {
     jibPlugin {
       id = 'com.google.cloud.tools.jib'
       displayName = 'Jib'
       description = 'Containerize your Java application'
+      if (GradleVersion.current() >= GradleVersion.version('9.0')) {
+        tags = ['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices']
+      }
       implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
     }
   }
