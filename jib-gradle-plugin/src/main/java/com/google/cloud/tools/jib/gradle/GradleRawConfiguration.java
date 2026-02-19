@@ -222,4 +222,9 @@ public class GradleRawConfiguration implements RawConfiguration {
   public List<? extends PlatformConfiguration> getPlatforms() {
     return jibExtension.getFrom().getPlatforms().get();
   }
+
+  @Override
+  public boolean getEnablePlatformTags() {
+    return jibExtension.getTo().getEnablePlatformTags();
+  }
 }
