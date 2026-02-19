@@ -171,14 +171,30 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                 .setCredential(credential)
                 .newRegistryClient();
 
-        String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-        if (wwwAuthenticate != null) {
-          eventHandlers.dispatch(
-              LogEvent.debug("WWW-Authenticate for " + imageReference + ": " + wwwAuthenticate));
-          registryClient.authPullByWwwAuthenticate(wwwAuthenticate);
-          return new ImagesAndRegistryClient(
-              pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-              registryClient);
+        List<String> wwwAuthenticateList =
+            ex.getHttpResponseException().getHeaders().getAuthenticateAsList();
+        if (wwwAuthenticateList != null && !wwwAuthenticateList.isEmpty()) {
+          RegistryException storedEx = null;
+          // try all WWW-Authenticate headers until one succeeds
+          for (String wwwAuthenticate : wwwAuthenticateList) {
+            eventHandlers.dispatch(
+                LogEvent.debug("WWW-Authenticate for " + imageReference + ": " + wwwAuthenticate));
+            try {
+              storedEx = null;
+              registryClient.authPullByWwwAuthenticate(wwwAuthenticate);
+              break;
+            } catch (RegistryException exc) {
+              eventHandlers.dispatch(
+                  LogEvent.debug(
+                      "WWW-Authenticate failed for " + imageReference + ": " + wwwAuthenticate));
+              storedEx = exc;
+            }
+          }
+          // if none of the WWW-Authenticate headers worked for the authPullByWwwAuthenticate, throw
+          // the last stored exception
+          if (storedEx != null) {
+            throw storedEx;
+          }
 
         } else {
           // Not getting WWW-Authenticate is unexpected in practice, and we may just blame the
@@ -200,10 +216,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
           eventHandlers.dispatch(
               LogEvent.debug("Trying bearer auth as fallback for " + imageReference + "..."));
           registryClient.doPullBearerAuth();
-          return new ImagesAndRegistryClient(
-              pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-              registryClient);
         }
+        return new ImagesAndRegistryClient(
+            pullBaseImages(registryClient, progressDispatcher.newChildProducer()), registryClient);
       }
     }
   }
