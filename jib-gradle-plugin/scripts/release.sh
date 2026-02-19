@@ -7,6 +7,10 @@ readonly PUBLISH_SECRET=$(cat "${KOKORO_KEYSTORE_DIR}/72743_gradle_publish_secre
 
 set -o xtrace
 
+echo "java version:"
+java -version
+
+
 # From default hostname, get id of container to exclude
 CONTAINER_ID=$(hostname)
 echo "$CONTAINER_ID"
