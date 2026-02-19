@@ -57,6 +57,8 @@ public class Image {
     @Nullable private DockerHealthCheck healthCheck;
     @Nullable private String workingDirectory;
     @Nullable private String user;
+    @Nullable private String baseImageName;
+    @Nullable private String baseImageDigest;
 
     private Builder(Class<? extends ManifestTemplate> imageFormat) {
       this.imageFormat = imageFormat;
@@ -251,6 +253,28 @@ public class Image {
     }
 
     /**
+     * Sets the base image name (reference) used to build this image.
+     *
+     * @param baseImageName the base image reference string
+     * @return this
+     */
+    public Builder setBaseImageName(@Nullable String baseImageName) {
+      this.baseImageName = baseImageName;
+      return this;
+    }
+
+    /**
+     * Sets the base image digest.
+     *
+     * @param baseImageDigest the base image digest string
+     * @return this
+     */
+    public Builder setBaseImageDigest(@Nullable String baseImageDigest) {
+      this.baseImageDigest = baseImageDigest;
+      return this;
+    }
+
+    /**
      * Create an {@link Image} instance.
      *
      * @return a new {@link Image} instance
@@ -271,7 +295,9 @@ public class Image {
           ImmutableSet.copyOf(volumesBuilder),
           ImmutableMap.copyOf(labelsBuilder),
           workingDirectory,
-          user);
+          user,
+          baseImageName,
+          baseImageDigest);
     }
   }
 
@@ -324,6 +350,12 @@ public class Image {
   /** User on the container configuration. */
   @Nullable private final String user;
 
+  /** The base image name (reference) used to build this image. */
+  @Nullable private final String baseImageName;
+
+  /** The base image digest. */
+  @Nullable private String baseImageDigest;
+
   private Image(
       Class<? extends ManifestTemplate> imageFormat,
       @Nullable Instant created,
@@ -339,7 +371,9 @@ public class Image {
       @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
-      @Nullable String user) {
+      @Nullable String user,
+      @Nullable String baseImageName,
+      @Nullable String baseImageDigest) {
     this.imageFormat = imageFormat;
     this.created = created;
     this.architecture = architecture;
@@ -355,6 +389,8 @@ public class Image {
     this.labels = labels;
     this.workingDirectory = workingDirectory;
     this.user = user;
+    this.baseImageName = baseImageName;
+    this.baseImageDigest = baseImageDigest;
   }
 
   public Class<? extends ManifestTemplate> getImageFormat() {
@@ -425,5 +461,35 @@ public class Image {
 
   public ImmutableList<HistoryEntry> getHistory() {
     return history;
+  }
+
+  /**
+   * Returns the base image name (reference) used to build this image.
+   *
+   * @return the base image name, or {@code null} if not set
+   */
+  @Nullable
+  public String getBaseImageName() {
+    return baseImageName;
+  }
+
+  /**
+   * Returns the base image digest.
+   *
+   * @return the base image digest, or {@code null} if not set
+   */
+  @Nullable
+  public String getBaseImageDigest() {
+    return baseImageDigest;
+  }
+
+  /**
+   * Sets the base image digest. This is set after image construction when the digest becomes
+   * available from the registry pull.
+   *
+   * @param baseImageDigest the base image digest string
+   */
+  public void setBaseImageDigest(@Nullable String baseImageDigest) {
+    this.baseImageDigest = baseImageDigest;
   }
 }

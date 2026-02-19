@@ -147,6 +147,15 @@ class BuildImageStep implements Callable<Image> {
         imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
       }
 
+      // Set base image reference and digest for OCI annotations.
+      if (buildContext.getBaseImageConfiguration() != null
+          && buildContext.getBaseImageConfiguration().getImage() != null
+          && !buildContext.getBaseImageConfiguration().getImage().isScratch()) {
+        imageBuilder.setBaseImageName(
+            buildContext.getBaseImageConfiguration().getImage().toString());
+        imageBuilder.setBaseImageDigest(baseImage.getBaseImageDigest());
+      }
+
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }

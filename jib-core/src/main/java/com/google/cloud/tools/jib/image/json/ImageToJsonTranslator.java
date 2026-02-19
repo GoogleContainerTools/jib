@@ -205,6 +205,18 @@ public class ImageToJsonTranslator {
             layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
       }
 
+      // Adds OCI base image annotations if the target format is OCI.
+      if (template instanceof OciManifestTemplate) {
+        OciManifestTemplate ociTemplate = (OciManifestTemplate) template;
+        if (image.getBaseImageName() != null) {
+          ociTemplate.addAnnotation("org.opencontainers.image.base.name", image.getBaseImageName());
+        }
+        if (image.getBaseImageDigest() != null) {
+          ociTemplate.addAnnotation(
+              "org.opencontainers.image.base.digest", image.getBaseImageDigest());
+        }
+      }
+
       return template;
 
     } catch (InstantiationException
