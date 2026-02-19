@@ -12,7 +12,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [8, 11]
+        include:
+          - java: 8
+            gradle-version: 6.9.2
+          - java: 11
+            gradle-version: 6.9.2
+          - java: 17
+            gradle-version: 9.2.1
     env:
       # for gradle
       TERM: dumb
@@ -24,15 +30,17 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
         with:
-          path: |
-            ~/.m2/repository
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-m2-
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: ${{ matrix.gradle-version }}
       - name: Run tests
         run: |
-          ./gradlew clean build jacocoTestReport --stacktrace
+          gradle clean build jacocoTestReport --stacktrace --debug
