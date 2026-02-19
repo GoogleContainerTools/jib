@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.cloud.tools.jib.image.json.DescriptorDigestDeserializer;
 import com.google.cloud.tools.jib.image.json.DescriptorDigestSerializer;
 import java.security.DigestException;
+import java.util.Locale;
 
 /**
  * Represents a SHA-256 content descriptor digest as defined by the Registry HTTP API v2 reference.
@@ -37,7 +38,7 @@ public class DescriptorDigest {
   public static final int HASH_LENGTH = 64;
 
   /** Pattern matches a SHA-256 hash - 32 bytes in lowercase hexadecimal. */
-  private static final String HASH_REGEX = String.format("[a-f0-9]{%d}", HASH_LENGTH);
+  private static final String HASH_REGEX = String.format(Locale.US, "[a-f0-9]{%d}", HASH_LENGTH);
 
   /** The algorithm prefix for the digest string. */
   private static final String DIGEST_PREFIX = "sha256:";
