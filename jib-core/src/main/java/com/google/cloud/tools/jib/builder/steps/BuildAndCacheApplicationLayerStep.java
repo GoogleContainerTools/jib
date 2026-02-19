@@ -98,14 +98,18 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
       Cache cache = buildContext.getApplicationLayersCache();
 
       ImmutableList<FileEntry> layerEntries = ImmutableList.copyOf(layerConfiguration.getEntries());
-      // Don't build the layer if it exists already.
+      // Don't build the layer if it exists already with expected compression
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerEntries);
-      if (optionalCachedLayer.isPresent()) {
+      if (optionalCachedLayer.isPresent()
+          && buildContext.getTargetCompressionAlgorithm()
+              == optionalCachedLayer.get().getCompressionAlgorithm()) {
         return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerEntries).build();
-      CachedLayer cachedLayer = cache.writeUncompressedLayer(layerBlob, layerEntries);
+      CachedLayer cachedLayer =
+          cache.writeUncompressedLayer(
+              layerBlob, buildContext.getTargetCompressionAlgorithm(), layerEntries);
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 

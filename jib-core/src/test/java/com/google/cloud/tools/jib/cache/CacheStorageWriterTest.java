@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -127,7 +128,8 @@ public class CacheStorageWriterTest {
   public void testWriteCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     Blob compressedLayerBlob = compress(uncompressedLayerBlob);
-    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compressedLayerBlob);
+    CachedLayer cachedLayer =
+        cacheStorageWriter.writeCompressed(compressedLayerBlob, CompressionAlgorithm.GZIP);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compressedLayerBlob);
   }
@@ -137,7 +139,8 @@ public class CacheStorageWriterTest {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     Blob compressedLayerBlob = compress(uncompressedLayerBlob, CompressorStreamFactory.ZSTANDARD);
 
-    CachedLayer cachedLayer = cacheStorageWriter.writeCompressed(compressedLayerBlob);
+    CachedLayer cachedLayer =
+        cacheStorageWriter.writeCompressed(compressedLayerBlob, CompressionAlgorithm.ZSTD);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compressedLayerBlob);
   }
@@ -146,7 +149,7 @@ public class CacheStorageWriterTest {
   public void testWriteCompressWhenUncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     // The detection of compression algorithm will fail
-    cacheStorageWriter.writeCompressed(uncompressedLayerBlob);
+    cacheStorageWriter.writeCompressed(uncompressedLayerBlob, CompressionAlgorithm.GZIP);
   }
 
   @Test
@@ -155,7 +158,9 @@ public class CacheStorageWriterTest {
     DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
-    CachedLayer cachedLayer = cacheStorageWriter.writeUncompressed(uncompressedLayerBlob, selector);
+    CachedLayer cachedLayer =
+        cacheStorageWriter.writeUncompressed(
+            uncompressedLayerBlob, CompressionAlgorithm.GZIP, selector);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob, compress(uncompressedLayerBlob));
 
@@ -171,7 +176,8 @@ public class CacheStorageWriterTest {
     DescriptorDigest diffId = getDigest(uncompressedLayerBlob).getDigest();
 
     CachedLayer cachedLayer =
-        cacheStorageWriter.writeTarLayer(diffId, compress(uncompressedLayerBlob));
+        cacheStorageWriter.writeTarLayer(
+            diffId, compress(uncompressedLayerBlob), CompressionAlgorithm.GZIP);
 
     BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
 

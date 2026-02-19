@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -78,7 +79,7 @@ public class ManifestPusherIntegrationTest {
 
     // Creates a valid image manifest.
     V22ManifestTemplate expectedManifestTemplate = new V22ManifestTemplate();
-    expectedManifestTemplate.addLayer(9, testLayerBlobDigest);
+    expectedManifestTemplate.addLayer(9, testLayerBlobDigest, CompressionAlgorithm.GZIP);
     expectedManifestTemplate.setContainerConfiguration(5, testContainerConfigurationBlobDigest);
 
     // Pushes the BLOBs.

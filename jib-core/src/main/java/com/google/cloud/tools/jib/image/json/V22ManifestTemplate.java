@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -106,7 +107,22 @@ public class V22ManifestTemplate implements BuildableManifestTemplate {
   }
 
   @Override
-  public void addLayer(long size, DescriptorDigest digest) {
-    layers.add(new ContentDescriptorTemplate(LAYER_MEDIA_TYPE, size, digest));
+  public void addLayer(
+      long size, DescriptorDigest digest, CompressionAlgorithm compressionAlgorithm) {
+    String layerMediaType;
+    switch (compressionAlgorithm) {
+      case GZIP:
+        layerMediaType = LAYER_MEDIA_TYPE;
+        break;
+      case ZSTD:
+        throw new IllegalArgumentException(
+            "Compression algorithm "
+                + compressionAlgorithm
+                + " is not supported with Docker v2.2 manifests");
+      default:
+        throw new IllegalArgumentException(
+            "Unsupported compression algorithm " + compressionAlgorithm);
+    }
+    layers.add(new ContentDescriptorTemplate(layerMediaType, size, digest));
   }
 }

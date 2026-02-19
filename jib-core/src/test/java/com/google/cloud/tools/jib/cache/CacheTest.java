@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -163,7 +164,7 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1)));
+    verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1), CompressionAlgorithm.GZIP));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
@@ -173,7 +174,8 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1(
+        cache.writeUncompressedLayer(layerBlob1, CompressionAlgorithm.GZIP, layerEntries1));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
@@ -183,7 +185,8 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1(
+        cache.writeUncompressedLayer(layerBlob1, CompressionAlgorithm.GZIP, layerEntries1));
     verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
 
@@ -198,8 +201,10 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer2(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
+    verifyIsLayer1(
+        cache.writeUncompressedLayer(layerBlob1, CompressionAlgorithm.GZIP, layerEntries1));
+    verifyIsLayer2(
+        cache.writeUncompressedLayer(layerBlob2, CompressionAlgorithm.GZIP, layerEntries2));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     verifyIsLayer2(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
     verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
