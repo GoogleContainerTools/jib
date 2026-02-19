@@ -1,0 +1,91 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'net.researchgate.release'
+    id 'com.gradle.plugin-publish'
+    // for eclipse import modifications
+    id 'eclipse'
+}
+
+/* LOCAL SNAPSHOT DEV */
+// to install for local testing - do not load this plugin when publishing to plugin portal
+// 'maven-publish' and 'com.gradle.plugin-publish' do not interact well with each other
+// https://discuss.gradle.org/t/debug-an-issue-in-publish-plugin-gradle-plugin-not-being-prepended-to-groupid/32720
+if (version.contains('SNAPSHOT')) {
+    apply plugin: 'maven-publish'
+
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+    }
+
+    task install {
+        dependsOn publishToMavenLocal
+    }
+}
+/* LOCAL SNAPSHOT DEV */
+
+dependencies {
+    sourceProject project(':jib-core')
+    sourceProject project(':jib-plugins-common')
+    ensureNoProjectDependencies()
+
+    implementation dependencyStrings.GRADLE_EXTENSION
+
+    testImplementation dependencyStrings.JUNIT
+    testImplementation dependencyStrings.TRUTH
+    testImplementation dependencyStrings.TRUTH8
+    testImplementation dependencyStrings.MOCKITO_CORE
+    testImplementation dependencyStrings.MOCKITO_INLINE
+    testImplementation dependencyStrings.SLF4J_API
+    testImplementation dependencyStrings.SYSTEM_RULES
+
+    testImplementation project(path:':jib-plugins-common', configuration:'tests')
+    integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+
+    integrationTestImplementation dependencyStrings.JBCRYPT
+
+    // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
+    testImplementation 'org.springframework.boot:spring-boot-gradle-plugin:2.7.13'
+}
+
+/* RELEASE */
+// Prepare release
+release {
+    tagTemplate = 'v$version-gradle'
+    ignoredSnapshotDependencies = [
+            'com.google.cloud.tools:jib-core',
+            'com.google.cloud.tools:jib-plugins-common',
+    ]
+    git {
+        requireBranch.set(/^gradle-release-v\d+.*$/)  //regex
+    }
+}
+// Gradle Plugin Portal releases
+gradlePlugin {
+    website = 'https://github.com/GoogleContainerTools/jib/'
+    vcsUrl = 'https://github.com/GoogleContainerTools/jib/'
+    testSourceSets sourceSets.integrationTest, sourceSets.test
+    plugins {
+        jibPlugin {
+            id = 'com.google.cloud.tools.jib'
+            displayName = 'Jib'
+            description = 'Containerize your Java application'
+            implementationClass = 'com.google.cloud.tools.jib.gradle.JibPlugin'
+            tags.set(['google', 'java', 'containers', 'docker', 'kubernetes', 'microservices'])
+        }
+    }
+}
+tasks.publishPlugins.dependsOn build
+/* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.plusConfigurations += [configurations.integrationTestImplementation]
+eclipse.classpath.file.whenMerged {
+    entries.each {
+        if (it.path == 'src/test/resources' || it.path == 'src/integration-test/resources') {
+            it.excludes += 'gradle/projects/'
+        }
+    }
+}
+/* ECLIPSE */
