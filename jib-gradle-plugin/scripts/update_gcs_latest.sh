@@ -28,8 +28,8 @@ versionString="{\"latest\":\"$1\"}"
 destination="gs://jib-versions/jib-gradle"
 
 echo $versionString > jib-gradle
-gsutil cp jib-gradle $destination
-gsutil acl ch -u allUsers:READ $destination
+gcloud storage cp jib-gradle $destination
+gcloud storage objects update --add-acl-grant=allUsers:READ $destination
 rm jib-gradle
 
 gcsResult=$(curl https://storage.googleapis.com/jib-versions/jib-gradle)
