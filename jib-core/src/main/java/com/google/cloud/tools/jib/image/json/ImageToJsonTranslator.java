@@ -209,11 +209,11 @@ public class ImageToJsonTranslator {
       if (template instanceof OciManifestTemplate) {
         OciManifestTemplate ociTemplate = (OciManifestTemplate) template;
         if (image.getBaseImageName() != null) {
-          ociTemplate.addAnnotation("org.opencontainers.image.base.name", image.getBaseImageName());
+          ociTemplate.addAnnotation(OCI_BASE_IMAGE_NAME_ANNOTATION, image.getBaseImageName());
         }
         if (image.getBaseImageDigest() != null) {
           ociTemplate.addAnnotation(
-              "org.opencontainers.image.base.digest", image.getBaseImageDigest());
+              OCI_BASE_IMAGE_DIGEST_ANNOTATION, image.getBaseImageDigest());
         }
       }
 
