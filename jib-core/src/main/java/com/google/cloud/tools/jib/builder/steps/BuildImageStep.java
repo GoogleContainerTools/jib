@@ -148,9 +148,7 @@ class BuildImageStep implements Callable<Image> {
       }
 
       // Set base image reference and digest for OCI annotations.
-      if (buildContext.getBaseImageConfiguration() != null
-          && buildContext.getBaseImageConfiguration().getImage() != null
-          && !buildContext.getBaseImageConfiguration().getImage().isScratch()) {
+      if (!buildContext.getBaseImageConfiguration().getImage().isScratch()) {
         imageBuilder.setBaseImageName(
             buildContext.getBaseImageConfiguration().getImage().toString());
         imageBuilder.setBaseImageDigest(baseImage.getBaseImageDigest());
