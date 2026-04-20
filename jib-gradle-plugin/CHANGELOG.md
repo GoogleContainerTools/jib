@@ -9,6 +9,32 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.5.3
+
+### Fixed
+- fix: _jibSkaffoldFilesV2 task fails on Gradle 9.0 ([#4469](https://github.com/GoogleContainerTools/jib/issues/4469))
+
+## 3.5.2
+
+### Added
+- feat: Avoid use of StartParameter.getSettingsFile() in jibSkaffoldFilesV2 when Gradle version is 9 or higher
+
+## 3.5.1
+
+### Added
+- feat: support Java 25 main methods
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.9
+
+## 3.5.0
+
+### Added
+- feat: add default base image for Java 25 (#4436)
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.8 for java 25 support
+
 ## 3.4.5
 
 ### Fixed

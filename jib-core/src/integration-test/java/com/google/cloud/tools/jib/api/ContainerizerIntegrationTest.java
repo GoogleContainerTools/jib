@@ -278,8 +278,10 @@ public class ContainerizerIntegrationTest {
   public void testBuildToDockerRegistry_dockerHubBaseImage()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
+    // We use eclipse-temurin instead of openjdk due to its deprecation
+    // see https://hub.docker.com/_/openjdk#deprecation-notice
     buildImage(
-        ImageReference.parse("openjdk:8-jre-slim"),
+        ImageReference.parse("eclipse-temurin:8-jre-alpine"),
         Containerizer.to(RegistryImage.named(dockerHost + ":5000/testimage:testtag")),
         Collections.emptyList());
 

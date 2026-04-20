@@ -149,4 +149,98 @@ public class MainClassFinderTest {
     MatcherAssert.assertThat(
         mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorldKt"));
   }
+
+  @Test
+  public void testMainClass_java25StaticNoArgs() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("StaticMainNoArgs.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("StaticMainNoArgs"));
+  }
+
+  @Test
+  public void testMainClass_java25InstanceWithArgs() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("InstanceMainWithArgs.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(),
+        CoreMatchers.containsString("InstanceMainWithArgs"));
+  }
+
+  @Test
+  public void testMainClass_java25InstanceNoArgs() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("InstanceMainNoArgs.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(),
+        CoreMatchers.containsString("InstanceMainNoArgs"));
+  }
+
+  @Test
+  public void testMainClass_java25ProtectedMain() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("ProtectedMain.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("ProtectedMain"));
+  }
+
+  @Test
+  public void testMainClass_java25PackagePrivateMain() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("PackagePrivateMain.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    MatcherAssert.assertThat(
+        mainClassFinderResult.getFoundMainClass(),
+        CoreMatchers.containsString("PackagePrivateMain"));
+  }
+
+  @Test
+  public void testMainClass_java25MultipleFlexibleMains() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(new DirectoryWalker(rootDirectory).walk(), logEventConsumer);
+    Assert.assertEquals(Result.Type.MULTIPLE_MAIN_CLASSES, mainClassFinderResult.getType());
+    Assert.assertEquals(5, mainClassFinderResult.getFoundMainClasses().size());
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("StaticMainNoArgs"));
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("InstanceMainWithArgs"));
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("InstanceMainNoArgs"));
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("ProtectedMain"));
+    Assert.assertTrue(mainClassFinderResult.getFoundMainClasses().contains("PackagePrivateMain"));
+  }
+
+  @Test
+  public void testMainClass_java25PrivateMainNotAllowed() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
+    Path classFile = rootDirectory.resolve("PrivateMain.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_NOT_FOUND, mainClassFinderResult.getType());
+  }
 }

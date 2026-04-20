@@ -32,8 +32,20 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Finds main classes in a list of class files. Main classes are classes that define the {@code
- * public static void main(String[] args)} method.
+ * Finds main classes in a list of class files. Main classes are classes that define a valid main
+ * method.
+ *
+ * <p>For class files compiled with Java 25 or later (JEP 512), valid main methods include:
+ *
+ * <ul>
+ *   <li>{@code static void main(String[] args)} - with public, protected, or package-private access
+ *   <li>{@code static void main()} - static main without parameters
+ *   <li>{@code void main(String[] args)} - instance main with parameters
+ *   <li>{@code void main()} - instance main without parameters
+ * </ul>
+ *
+ * <p>For class files compiled with earlier Java versions, only the traditional {@code public static
+ * void main(String[] args)} is recognized.
  */
 public class MainClassFinder {
 
@@ -106,36 +118,85 @@ public class MainClassFinder {
   /** {@link ClassVisitor} that keeps track of whether or not it has visited a main class. */
   private static class MainClassVisitor extends ClassVisitor {
 
-    /** The return/argument types for main. */
-    private static final String MAIN_DESCRIPTOR =
+    /** Java 25 class file major version (flexible main methods finalized). */
+    private static final int JAVA_25_CLASS_VERSION = 69;
+
+    /** The return/argument types for main with String[] parameter. */
+    private static final String MAIN_WITH_ARGS_DESCRIPTOR =
         org.objectweb.asm.Type.getMethodDescriptor(
             org.objectweb.asm.Type.VOID_TYPE, org.objectweb.asm.Type.getType(String[].class));
 
-    /** Accessors that main may or may not have. */
-    private static final int OPTIONAL_ACCESS =
+    /** The return/argument types for main without parameters. */
+    private static final String MAIN_NO_ARGS_DESCRIPTOR =
+        org.objectweb.asm.Type.getMethodDescriptor(org.objectweb.asm.Type.VOID_TYPE);
+
+    /** Optional modifiers that main may or may not have. */
+    private static final int OPTIONAL_MODIFIERS =
         Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED | Opcodes.ACC_VARARGS | Opcodes.ACC_SYNTHETIC;
 
     private boolean visitedMainClass;
+    private int classVersion;
 
     private MainClassVisitor() {
       super(Opcodes.ASM9);
     }
 
     @Override
+    public void visit(
+        int version,
+        int access,
+        String name,
+        String signature,
+        String superName,
+        String[] interfaces) {
+      this.classVersion = version;
+      super.visit(version, access, name, signature, superName, interfaces);
+    }
+
+    @Override
     @Nullable
     public MethodVisitor visitMethod(
         int access, String name, String descriptor, String signature, String[] exceptions) {
-      if ((access & ~OPTIONAL_ACCESS) == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
-          && name.equals("main")
-          && descriptor.equals(MAIN_DESCRIPTOR)) {
+      if (!name.equals("main")) {
+        return null;
+      }
+
+      if ((access & Opcodes.ACC_PRIVATE) != 0) {
+        return null;
+      }
+
+      // For class files before Java 25, only traditional main is valid
+      if (classVersion < JAVA_25_CLASS_VERSION) {
+        // Traditional main: public static void main(String[] args)
+        int requiredAccess = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
+        if ((access & ~OPTIONAL_MODIFIERS) == requiredAccess
+            && descriptor.equals(MAIN_WITH_ARGS_DESCRIPTOR)) {
+          visitedMainClass = true;
+        }
+        return null;
+      }
+
+      // For Java 25+, check flexible main method signatures (JEP 512)
+      boolean isValidDescriptor =
+          descriptor.equals(MAIN_WITH_ARGS_DESCRIPTOR)
+              || descriptor.equals(MAIN_NO_ARGS_DESCRIPTOR);
+
+      if (!isValidDescriptor) {
+        return null;
+      }
+
+      int relevantAccess =
+          access & ~(Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | OPTIONAL_MODIFIERS);
+      if (relevantAccess == Opcodes.ACC_STATIC || relevantAccess == 0) {
         visitedMainClass = true;
       }
+
       return null;
     }
   }
 
   /**
-   * Tries to find classes with {@code psvm} (see class javadoc) in {@code files}.
+   * Tries to find classes with valid main methods (see class javadoc) in {@code files}.
    *
    * @param files the files to search
    * @param logger a {@link Consumer} used to handle log events
