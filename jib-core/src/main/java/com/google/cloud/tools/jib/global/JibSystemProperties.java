@@ -35,6 +35,8 @@ public class JibSystemProperties {
 
   @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
 
+  @VisibleForTesting public static final String BLOB_PUSH_RETRIES = "jib.blobPushRetries";
+
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is
    * defined by the {@code jib.httpTimeout} system property. The default value is 20000 if the
@@ -121,6 +123,22 @@ public class JibSystemProperties {
    */
   public static boolean skipExistingImages() {
     return Boolean.getBoolean(SKIP_EXISTING_IMAGES);
+  }
+
+  /**
+   * Gets the maximum number of attempts for the 3-step blob push (POST/PATCH/PUT) when the registry
+   * returns a transient BLOB_UPLOAD_UNKNOWN (seen against ghcr.io, where the upload session can be
+   * unknown to the node serving the commit PUT). Defined by {@code jib.blobPushRetries}. Defaults
+   * to 3; set to 1 to disable retries.
+   *
+   * @return the maximum number of attempts (>= 1)
+   */
+  public static int getBlobPushRetries() {
+    Integer value = Integer.getInteger(BLOB_PUSH_RETRIES);
+    if (value == null || value < 1) {
+      return 3;
+    }
+    return value;
   }
 
   private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {

@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -539,6 +540,45 @@ public class RegistryClient {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
+    int maxAttempts = JibSystemProperties.getBlobPushRetries();
+    long backoffMs = 1000;
+    RegistryErrorException lastTransient = null;
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return doPushBlob(blobPusher, blobDigest, writtenByteCountListener);
+      } catch (RegistryErrorException ex) {
+        // ghcr.io and other distributed registries can return 404 BLOB_UPLOAD_UNKNOWN on the
+        // commit PUT when the upload session is not yet visible to the node serving the request.
+        // The old upload URL is dead, so restart the whole sequence from POST.
+        if (attempt >= maxAttempts || !isTransientBlobUploadError(ex)) {
+          throw ex;
+        }
+        lastTransient = ex;
+        eventHandlers.dispatch(
+            LogEvent.warn(
+                "blob push failed (attempt "
+                    + attempt
+                    + "/"
+                    + maxAttempts
+                    + "), restarting upload session: "
+                    + ex.getMessage()));
+        try {
+          Thread.sleep(backoffMs);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw ex;
+        }
+        backoffMs *= 2;
+      }
+    }
+    throw Verify.verifyNotNull(lastTransient); // unreachable
+  }
+
+  private boolean doPushBlob(
+      BlobPusher blobPusher,
+      DescriptorDigest blobDigest,
+      Consumer<Long> writtenByteCountListener)
+      throws IOException, RegistryException {
     try (TimerEventDispatcher timerEventDispatcher =
         new TimerEventDispatcher(eventHandlers, "pushBlob")) {
       try (TimerEventDispatcher timerEventDispatcher2 =
@@ -566,6 +606,24 @@ public class RegistryClient {
         return false;
       }
     }
+  }
+
+  @VisibleForTesting
+  static boolean isTransientBlobUploadError(RegistryErrorException ex) {
+    Throwable cause = ex.getCause();
+    if (!(cause instanceof ResponseException)) {
+      return false;
+    }
+    ResponseException responseException = (ResponseException) cause;
+    int code = responseException.getStatusCode();
+    if (code >= 500 && code <= 599) {
+      return true;
+    }
+    if (code == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      String content = responseException.getContent();
+      return content != null && content.contains("BLOB_UPLOAD_UNKNOWN");
+    }
+    return false;
   }
 
   /**

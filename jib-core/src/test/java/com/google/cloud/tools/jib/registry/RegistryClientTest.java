@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.http.TestWebServer;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -409,6 +410,63 @@ public class RegistryClientTest {
             eventHandlers, "localhost:" + registry.getLocalPort(), "foo/bar", new PlainHttpClient())
         .setCredential(credential)
         .newRegistryClient();
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_ghcrBlobUploadUnknown() {
+    ResponseException responseException = Mockito.mock(ResponseException.class);
+    Mockito.when(responseException.getStatusCode()).thenReturn(404);
+    Mockito.when(responseException.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"BLOB_UPLOAD_UNKNOWN\","
+                + "\"message\":\"blob upload unknown to registry\"}]}");
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", responseException);
+
+    Assert.assertTrue(RegistryClient.isTransientBlobUploadError(ex));
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_notFoundWithoutBlobUploadUnknown() {
+    // Genuine 404 (e.g., wrong image name) must NOT be retried.
+    ResponseException responseException = Mockito.mock(ResponseException.class);
+    Mockito.when(responseException.getStatusCode()).thenReturn(404);
+    Mockito.when(responseException.getContent())
+        .thenReturn("{\"errors\":[{\"code\":\"NAME_UNKNOWN\",\"message\":\"repository not found\"}]}");
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", responseException);
+
+    Assert.assertFalse(RegistryClient.isTransientBlobUploadError(ex));
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_5xx() {
+    ResponseException responseException = Mockito.mock(ResponseException.class);
+    Mockito.when(responseException.getStatusCode()).thenReturn(503);
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", responseException);
+
+    Assert.assertTrue(RegistryClient.isTransientBlobUploadError(ex));
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_4xxNon404() {
+    ResponseException responseException = Mockito.mock(ResponseException.class);
+    Mockito.when(responseException.getStatusCode()).thenReturn(401);
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", responseException);
+
+    Assert.assertFalse(RegistryClient.isTransientBlobUploadError(ex));
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_nonResponseExceptionCause() {
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", new IOException("boom"));
+
+    Assert.assertFalse(RegistryClient.isTransientBlobUploadError(ex));
+  }
+
+  @Test
+  public void testIsTransientBlobUploadError_nullCause() {
+    RegistryErrorException ex = new RegistryErrorException("push BLOB", null);
+
+    Assert.assertFalse(RegistryClient.isTransientBlobUploadError(ex));
   }
 
   private LogEvent logContains(String substring) {
