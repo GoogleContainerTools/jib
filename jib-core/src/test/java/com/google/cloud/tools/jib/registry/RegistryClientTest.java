@@ -438,12 +438,12 @@ public class RegistryClientTest {
   }
 
   @Test
-  public void testIsTransientBlobUploadError_5xx() {
+  public void testIsTransientBlobUploadError_5xxNotRetried() {
     ResponseException responseException = Mockito.mock(ResponseException.class);
     Mockito.when(responseException.getStatusCode()).thenReturn(503);
     RegistryErrorException ex = new RegistryErrorException("push BLOB", responseException);
 
-    Assert.assertTrue(RegistryClient.isTransientBlobUploadError(ex));
+    Assert.assertFalse(RegistryClient.isTransientBlobUploadError(ex));
   }
 
   @Test

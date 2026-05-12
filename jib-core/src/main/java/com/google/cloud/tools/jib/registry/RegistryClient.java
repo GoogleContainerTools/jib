@@ -547,9 +547,9 @@ public class RegistryClient {
       try {
         return doPushBlob(blobPusher, blobDigest, writtenByteCountListener);
       } catch (RegistryErrorException ex) {
-        // ghcr.io and other distributed registries can return 404 BLOB_UPLOAD_UNKNOWN on the
-        // commit PUT when the upload session is not yet visible to the node serving the request.
-        // The old upload URL is dead, so restart the whole sequence from POST.
+        // A registry can return 404 BLOB_UPLOAD_UNKNOWN on the commit PUT when the upload session
+        // is not yet visible to the node serving the request (notably ghcr.io, but possible on any
+        // distributed registry). The old upload URL is dead, so restart the sequence from POST.
         if (attempt >= maxAttempts || !isTransientBlobUploadError(ex)) {
           throw ex;
         }
@@ -615,15 +615,11 @@ public class RegistryClient {
       return false;
     }
     ResponseException responseException = (ResponseException) cause;
-    int code = responseException.getStatusCode();
-    if (code >= 500 && code <= 599) {
-      return true;
+    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      return false;
     }
-    if (code == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      String content = responseException.getContent();
-      return content != null && content.contains("BLOB_UPLOAD_UNKNOWN");
-    }
-    return false;
+    String content = responseException.getContent();
+    return content != null && content.contains("BLOB_UPLOAD_UNKNOWN");
   }
 
   /**

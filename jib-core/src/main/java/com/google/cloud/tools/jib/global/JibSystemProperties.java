@@ -127,9 +127,10 @@ public class JibSystemProperties {
 
   /**
    * Gets the maximum number of attempts for the 3-step blob push (POST/PATCH/PUT) when the registry
-   * returns a transient BLOB_UPLOAD_UNKNOWN (seen against ghcr.io, where the upload session can be
-   * unknown to the node serving the commit PUT). Defined by {@code jib.blobPushRetries}. Defaults
-   * to 3; set to 1 to disable retries.
+   * returns {@code 404 BLOB_UPLOAD_UNKNOWN} on the commit PUT — i.e., the upload session is not
+   * visible to the node serving the request (common on distributed registries such as ghcr.io).
+   * Defined by {@code jib.blobPushRetries}.
+   * Defaults to 3; set to 1 to disable retries.
    *
    * @return the maximum number of attempts (>= 1)
    */
