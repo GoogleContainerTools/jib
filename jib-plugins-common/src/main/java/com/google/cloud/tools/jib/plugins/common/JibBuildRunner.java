@@ -74,8 +74,12 @@ public class JibBuildRunner {
       String suffix) {
     StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
     successMessageBuilder.add(colorCyan(targetImageReference.toString()));
-    for (String tag : additionalTags) {
-      successMessageBuilder.add(colorCyan(targetImageReference.withQualifier(tag).toString()));
+   for (String tag : additionalTags) {
+      if (tag.equals(targetImageReference.getQualifier())) {
+        continue;
+      }
+      successMessageBuilder.add(
+          colorCyan(targetImageReference.withQualifier(tag).toStringWithQualifier()));
     }
     return successMessageBuilder.toString();
   }
