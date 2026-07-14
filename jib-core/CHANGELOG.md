@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.28.2
+
+### Changed
+- deps: Update Jackson BOM version to 2.21.1 (#4495)
+
+### Fixed
+- fix: ignore unknown "artifactType" field in manifest descriptors (#4509)
+
 ## 0.28.1
 
 ### Added
