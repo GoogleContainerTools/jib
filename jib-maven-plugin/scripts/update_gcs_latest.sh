@@ -29,7 +29,7 @@ destination="gs://jib-versions/jib-maven"
 
 echo $versionString > jib-maven
 gcloud storage cp jib-maven $destination
-gcloud storage objects update --add-acl-grant=allUsers:READ $destination
+gcloud storage objects update --add-acl-grant=entity=allUsers,role=READER $destination
 rm jib-maven
 
 gcsResult=$(curl https://storage.googleapis.com/jib-versions/jib-maven)

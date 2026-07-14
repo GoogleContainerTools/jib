@@ -29,7 +29,7 @@ destination="gs://jib-versions/jib-cli"
 
 echo $versionString > jib-cli-temp
 gcloud storage cp jib-cli-temp $destination
-gcloud storage objects update --add-acl-grant=allUsers=READ $destination
+gcloud storage objects update --add-acl-grant=entity=allUsers,role=READER $destination
 rm jib-cli-temp
 
 gcsResult=$(curl https://storage.googleapis.com/jib-versions/jib-cli)
