@@ -393,12 +393,15 @@ public class JibExtensionTest {
     testJibExtension.outputPaths(
         outputFiles -> {
           outputFiles.setDigest("/path/to/digest");
+          outputFiles.setImageTagDigest("/path/to/image-tag-digest");
           outputFiles.setImageId("/path/to/id");
           outputFiles.setTar("path/to/tar");
         });
 
     assertThat(testJibExtension.getOutputPaths().getDigestPath())
         .isEqualTo(Paths.get("/path/to/digest").toAbsolutePath());
+    assertThat(testJibExtension.getOutputPaths().getImageTagDigestPath())
+        .isEqualTo(Paths.get("/path/to/image-tag-digest").toAbsolutePath());
     assertThat(testJibExtension.getOutputPaths().getImageIdPath())
         .isEqualTo(Paths.get("/path/to/id").toAbsolutePath());
     assertThat(testJibExtension.getOutputPaths().getTarPath())
@@ -555,6 +558,9 @@ public class JibExtensionTest {
     System.setProperty("jib.outputPaths.digest", "/digest/path");
     assertThat(testJibExtension.getOutputPaths().getDigestPath())
         .isEqualTo(Paths.get("/digest/path").toAbsolutePath());
+    System.setProperty("jib.outputPaths.imageTagDigest", "/image-tag-digest/path");
+    assertThat(testJibExtension.getOutputPaths().getImageTagDigestPath())
+        .isEqualTo(Paths.get("/image-tag-digest/path").toAbsolutePath());
     System.setProperty("jib.outputPaths.imageId", "/id/path");
     assertThat(testJibExtension.getOutputPaths().getImageIdPath())
         .isEqualTo(Paths.get("/id/path").toAbsolutePath());
@@ -565,6 +571,9 @@ public class JibExtensionTest {
     System.setProperty("jib.outputPaths.digest", "digest/path");
     assertThat(testJibExtension.getOutputPaths().getDigestPath())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("digest/path"));
+    System.setProperty("jib.outputPaths.imageTagDigest", "image-tag-digest/path");
+    assertThat(testJibExtension.getOutputPaths().getImageTagDigestPath())
+        .isEqualTo(fakeProject.getProjectDir().toPath().resolve("image-tag-digest/path"));
     System.setProperty("jib.outputPaths.imageId", "id/path");
     assertThat(testJibExtension.getOutputPaths().getImageIdPath())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("id/path"));

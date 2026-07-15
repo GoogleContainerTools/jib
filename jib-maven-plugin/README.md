@@ -336,6 +336,7 @@ Property | Type | Default | Description
 `digest` | string | `(project-dir)/target/jib-image.digest` | The path of the image digest written out during the build. Relative paths are resolved relative to the project root.
 `imageId` | string | `(project-dir)/target/jib-image.id` | The path of the image ID written out during the build. Relative paths are resolved relative to the project root.
 `imageJson` | string | `(project-dir)/target/jib-image.json` | The path of the image metadata json file written out during the build. Relative paths are resolved relative to the project root.
+`imageTagDigest` | string | `(project-dir)/target/jib-image-tag.digest` | The path of the image tags with digest written out during the build. Relative paths are resolved relative to the project root.
 
 <a name="dockerclient-object"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 

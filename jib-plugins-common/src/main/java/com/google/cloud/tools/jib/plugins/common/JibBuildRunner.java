@@ -193,6 +193,7 @@ public class JibBuildRunner {
   private final Consumer<LogEvent> logger;
   private final HelpfulSuggestions helpfulSuggestions;
   @Nullable private Path imageDigestOutputPath;
+  @Nullable private Path imageTagDigestOutputPath;
   @Nullable private Path imageIdOutputPath;
   @Nullable private Path imageJsonOutputPath;
 
@@ -235,6 +236,10 @@ public class JibBuildRunner {
       if (imageDigestOutputPath != null) {
         String imageDigest = jibContainer.getDigest().toString();
         Files.write(imageDigestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+      }
+      if (imageTagDigestOutputPath != null) {
+        Set<String> imageTagsWithDigest = jibContainer.getImageTagsWithDigest();
+        Files.write(imageTagDigestOutputPath, imageTagsWithDigest);
       }
       if (imageIdOutputPath != null) {
         String imageId = jibContainer.getImageId().toString();
@@ -301,6 +306,11 @@ public class JibBuildRunner {
    */
   public JibBuildRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
     this.imageDigestOutputPath = imageDigestOutputPath;
+    return this;
+  }
+
+  public JibBuildRunner writeImageTagDigest(@Nullable Path imageTagDigestOutputPath) {
+    this.imageTagDigestOutputPath = imageTagDigestOutputPath;
     return this;
   }
 
