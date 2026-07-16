@@ -50,6 +50,7 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.registry.RegistryUnauthorizedExceptionHandler;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -64,6 +65,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifests for the specified platforms. */
@@ -132,12 +134,8 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       } else if (imageReference.getDigest().isPresent()) {
         List<Image> images = getCachedBaseImages();
         if (!images.isEmpty()) {
-          RegistryClient noAuthRegistryClient =
-              buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
-          // TODO: passing noAuthRegistryClient may be problematic. It may return 401 unauthorized
-          // if layers have to be downloaded.
-          // https://github.com/GoogleContainerTools/jib/issues/2220
-          return new ImagesAndRegistryClient(images, noAuthRegistryClient);
+          RegistryClient onDemandAuthRegistryClient = createOnDemandAuthenticatingRegistryClient();
+          return new ImagesAndRegistryClient(images, onDemandAuthRegistryClient);
         }
       }
 
@@ -147,63 +145,62 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
         return mirrorPull.get();
       }
 
-      try {
-        // First, try with no credentials. This works with public GCR images (but not Docker Hub).
-        // TODO: investigate if we should just pass credentials up front. However, this involves
-        // some risk. https://github.com/GoogleContainerTools/jib/pull/2200#discussion_r359069026
-        // contains some related discussions.
-        RegistryClient noAuthRegistryClient =
-            buildContext.newBaseImageRegistryClientFactory().newRegistryClient();
-        return new ImagesAndRegistryClient(
-            pullBaseImages(noAuthRegistryClient, progressDispatcher.newChildProducer()),
-            noAuthRegistryClient);
+      RegistryClient onDemandAuthRegistryClient = createOnDemandAuthenticatingRegistryClient();
+      return new ImagesAndRegistryClient(
+          pullBaseImages(onDemandAuthRegistryClient, progressDispatcher.newChildProducer()),
+          onDemandAuthRegistryClient);
+    }
+  }
 
-      } catch (RegistryUnauthorizedException ex) {
-        eventHandlers.dispatch(
-            LogEvent.lifecycle(
-                "The base image requires auth. Trying again for " + imageReference + "..."));
+  private RegistryClient createOnDemandAuthenticatingRegistryClient()
+      throws CredentialRetrievalException {
+    Credential credential =
+        RegistryCredentialRetriever.getBaseImageCredential(buildContext).orElse(null);
+    return buildContext
+        .newBaseImageRegistryClientFactory()
+        .setCredential(credential)
+        .setUnauthorizedExceptionHandlerSupplier(
+            () -> PullBaseImageStep::handleRegistryUnauthorizedException)
+        .newRegistryClient();
+  }
 
-        Credential credential =
-            RegistryCredentialRetriever.getBaseImageCredential(buildContext).orElse(null);
-        RegistryClient registryClient =
-            buildContext
-                .newBaseImageRegistryClientFactory()
-                .setCredential(credential)
-                .newRegistryClient();
-
+  /**
+   * Handles an unauthorized exception by performing authentication on demand.
+   *
+   * @param registryClient the registry client to be reconfigured
+   * @param ex the exception that was caught
+   * @return a supplier of the next handler, used only if another exception is thrown
+   * @throws RegistryException if a registry error occurs
+   * @throws IOException if an I/O error occurs
+   */
+  static Supplier<RegistryUnauthorizedExceptionHandler> handleRegistryUnauthorizedException(
+      final RegistryClient registryClient, final RegistryUnauthorizedException ex)
+      throws RegistryException, IOException {
+    // Double indentation keeps code at same level as original code
+    {
+      {
+        final EventHandlers eventHandlers = registryClient.getEventHandlers();
+        final String imageReference = ex.getImageReference();
         String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
         if (wwwAuthenticate != null) {
           eventHandlers.dispatch(
               LogEvent.debug("WWW-Authenticate for " + imageReference + ": " + wwwAuthenticate));
           registryClient.authPullByWwwAuthenticate(wwwAuthenticate);
-          return new ImagesAndRegistryClient(
-              pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-              registryClient);
-
         } else {
           // Not getting WWW-Authenticate is unexpected in practice, and we may just blame the
           // server and fail. However, to keep some old behavior, try a few things as a last resort.
           // TODO: consider removing this fallback branch.
-          if (credential != null && !credential.isOAuth2RefreshToken()) {
-            eventHandlers.dispatch(
-                LogEvent.debug("Trying basic auth as fallback for " + imageReference + "..."));
-            registryClient.configureBasicAuth();
-            try {
-              return new ImagesAndRegistryClient(
-                  pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-                  registryClient);
-            } catch (RegistryUnauthorizedException ignored) {
-              // Fall back to try bearer auth.
-            }
-          }
-
           eventHandlers.dispatch(
               LogEvent.debug("Trying bearer auth as fallback for " + imageReference + "..."));
-          registryClient.doPullBearerAuth();
-          return new ImagesAndRegistryClient(
-              pullBaseImages(registryClient, progressDispatcher.newChildProducer()),
-              registryClient);
+          if (!registryClient.doPullBearerAuth()) {
+            eventHandlers.dispatch(
+                LogEvent.error("Failed to bearer auth for pull of " + imageReference));
+            throw ex;
+          }
         }
+
+        // If another exception occurs, use the default behavior
+        return RegistryClient::defaultRegistryUnauthorizedExceptionHandler;
       }
     }
   }
