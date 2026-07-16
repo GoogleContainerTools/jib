@@ -225,7 +225,8 @@ public class LocalBaseImageSteps {
                 .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
       }
 
-      Path configPath = destination.resolve(loadManifest.getConfig());
+      Path configPath =
+          resolveManifestPath(destination, loadManifest.getConfig(), "config path");
       ContainerConfigurationTemplate configurationTemplate =
           JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
       // Don't compute the digest of the loaded Java JSON instance.
@@ -247,8 +248,12 @@ public class LocalBaseImageSteps {
 
       // Check the first layer to see if the layers are compressed already. 'docker save' output
       // is uncompressed, but a jib-built tar has compressed layers.
+      List<Path> layerPaths = new ArrayList<>();
+      for (String layerFile : layerFiles) {
+        layerPaths.add(resolveManifestPath(destination, layerFile, "layer path"));
+      }
       boolean layersAreCompressed =
-          !layerFiles.isEmpty() && isGzipped(destination.resolve(layerFiles.get(0)));
+          !layerPaths.isEmpty() && isGzipped(layerPaths.get(0));
 
       // Process layer blobs
       try (ProgressEventDispatcher progressEventDispatcher =
@@ -256,8 +261,8 @@ public class LocalBaseImageSteps {
               "processing base image layers", layerFiles.size())) {
         // Start compressing layers in parallel
         List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
-        for (int index = 0; index < layerFiles.size(); index++) {
-          Path layerFile = destination.resolve(layerFiles.get(index));
+        for (int index = 0; index < layerPaths.size(); index++) {
+          Path layerFile = layerPaths.get(index);
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
           ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
               progressEventDispatcher.newChildProducer();
@@ -313,5 +318,19 @@ public class LocalBaseImageSteps {
               true);
       return new PreparedLayer.Builder(cache.writeTarLayer(diffId, compressedBlob)).build();
     }
+  }
+
+  private static Path resolveManifestPath(Path destination, String manifestPath, String pathLabel)
+      throws IOException {
+    Path normalizedDestination = destination.toAbsolutePath().normalize();
+    Path resolvedPath = normalizedDestination.resolve(manifestPath).normalize();
+    if (!resolvedPath.startsWith(normalizedDestination)) {
+      throw new IOException(
+          "Invalid base image format: "
+              + pathLabel
+              + " escapes extraction directory: "
+              + manifestPath);
+    }
+    return resolvedPath;
   }
 }

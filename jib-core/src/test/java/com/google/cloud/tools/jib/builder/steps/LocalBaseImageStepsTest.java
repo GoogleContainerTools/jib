@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
@@ -24,18 +25,24 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.CliDockerClient;
+import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Collections;
 import java.util.Optional;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,6 +70,36 @@ public class LocalBaseImageStepsTest {
 
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
+  }
+
+  private static Path writeDockerSaveTar(Path tarFile, String configPath, String layerPath)
+      throws IOException, DigestException {
+    DockerManifestEntryTemplate manifestEntry = new DockerManifestEntryTemplate();
+    manifestEntry.setConfig(configPath);
+    manifestEntry.addRepoTag("test:latest");
+    manifestEntry.addLayerFile(layerPath);
+
+    ContainerConfigurationTemplate containerConfig = new ContainerConfigurationTemplate();
+    containerConfig.addLayerDiffId(DescriptorDigest.fromHash("a".repeat(64)));
+
+    try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(Files.newOutputStream(tarFile))) {
+      writeTarEntry(
+          tarOut,
+          "manifest.json",
+          JsonTemplateMapper.toByteArray(Collections.singletonList(manifestEntry)));
+      writeTarEntry(tarOut, "config.json", JsonTemplateMapper.toByteArray(containerConfig));
+      writeTarEntry(tarOut, "layer.tar", "layer-data".getBytes(StandardCharsets.UTF_8));
+    }
+    return tarFile;
+  }
+
+  private static void writeTarEntry(TarArchiveOutputStream tarOut, String entryName, byte[] contents)
+      throws IOException {
+    TarArchiveEntry entry = new TarArchiveEntry(entryName);
+    entry.setSize(contents.length);
+    tarOut.putArchiveEntry(entry);
+    tarOut.write(contents);
+    tarOut.closeArchiveEntry();
   }
 
   @Before
@@ -130,6 +167,57 @@ public class LocalBaseImageStepsTest {
         "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94",
         result.layers.get(1).get().getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals(2, result.configurationTemplate.getLayerCount());
+  }
+
+  @Test
+  public void testCacheDockerImageTar_rejectsConfigOutsideExtractionDirectory() throws Exception {
+    ContainerConfigurationTemplate outsideConfig = new ContainerConfigurationTemplate();
+    outsideConfig.addLayerDiffId(DescriptorDigest.fromHash("a".repeat(64)));
+
+    Path outsideConfigPath = temporaryFolder.newFile("outside-config.json").toPath();
+    Files.write(outsideConfigPath, JsonTemplateMapper.toByteArray(outsideConfig));
+
+    Path maliciousTar =
+        writeDockerSaveTar(
+            temporaryFolder.newFile("malicious-config.tar").toPath(),
+            outsideConfigPath.toString(),
+            "layer.tar");
+
+    IOException exception =
+        Assert.assertThrows(
+            IOException.class,
+            () ->
+                LocalBaseImageSteps.cacheDockerImageTar(
+                    buildContext,
+                    maliciousTar,
+                    progressEventDispatcherFactory,
+                    tempDirectoryProvider));
+
+    Assert.assertTrue(exception.getMessage().contains("config path escapes extraction directory"));
+  }
+
+  @Test
+  public void testCacheDockerImageTar_rejectsLayerOutsideExtractionDirectory() throws Exception {
+    Path outsideLayerPath = temporaryFolder.newFile("outside-layer.tar").toPath();
+    Files.write(outsideLayerPath, "outside-layer".getBytes(StandardCharsets.UTF_8));
+
+    Path maliciousTar =
+        writeDockerSaveTar(
+            temporaryFolder.newFile("malicious-layer.tar").toPath(),
+            "config.json",
+            outsideLayerPath.toString());
+
+    IOException exception =
+        Assert.assertThrows(
+            IOException.class,
+            () ->
+                LocalBaseImageSteps.cacheDockerImageTar(
+                    buildContext,
+                    maliciousTar,
+                    progressEventDispatcherFactory,
+                    tempDirectoryProvider));
+
+    Assert.assertTrue(exception.getMessage().contains("layer path escapes extraction directory"));
   }
 
   @Test
