@@ -369,6 +369,14 @@ public class JibPluginTest {
   }
 
   @Test
+  public void testLazyEvalForEnvironment() {
+    BuildResult showEnvironment = testProject.build("showenvironment", "-Djib.console=plain");
+    assertThat(showEnvironment.getOutput())
+            .contains(
+                    "environment contains values [var1:updated-first-environment-var, var2:updated-second-environment-var]");
+  }
+
+  @Test
   public void testLazyEvalForEntryPoint() {
     BuildResult showEntrypoint = testProject.build("showentrypoint", "-Djib.console=plain");
     assertThat(showEntrypoint.getOutput()).contains("entrypoint contains updated");

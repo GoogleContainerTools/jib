@@ -176,7 +176,7 @@ public class JibExtensionTest {
   @Test
   public void testContainer() {
     assertThat(testJibExtension.getContainer().getJvmFlags()).isEmpty();
-    assertThat(testJibExtension.getContainer().getEnvironment()).isEmpty();
+    assertThat(testJibExtension.getContainer().getEnvironment().get()).isEmpty();
     assertThat(testJibExtension.getContainer().getExtraClasspath()).isEmpty();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isFalse();
     assertThat(testJibExtension.getContainer().getMainClass()).isNull();
@@ -192,7 +192,6 @@ public class JibExtensionTest {
     testJibExtension.container(
         container -> {
           container.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
-          container.setEnvironment(ImmutableMap.of("var1", "value1", "var2", "value2"));
           container.setEntrypoint(Arrays.asList("foo", "bar", "baz"));
           container.setExtraClasspath(Arrays.asList("/d1", "/d2", "/d3"));
           container.setExpandClasspathDependencies(true);
@@ -207,9 +206,6 @@ public class JibExtensionTest {
     ContainerParameters container = testJibExtension.getContainer();
     assertThat(container.getEntrypoint()).containsExactly("foo", "bar", "baz").inOrder();
     assertThat(container.getJvmFlags()).containsExactly("jvmFlag1", "jvmFlag2").inOrder();
-    assertThat(container.getEnvironment())
-        .containsExactly("var1", "value1", "var2", "value2")
-        .inOrder();
     assertThat(container.getExtraClasspath()).containsExactly("/d1", "/d2", "/d3").inOrder();
     assertThat(testJibExtension.getContainer().getExpandClasspathDependencies()).isTrue();
     assertThat(testJibExtension.getContainer().getMainClass()).isEqualTo("mainClass");
@@ -465,7 +461,7 @@ public class JibExtensionTest {
         .containsExactly("entry1", "entry2", "entry3")
         .inOrder();
     System.setProperty("jib.container.environment", "env1=val1,env2=val2");
-    assertThat(testJibExtension.getContainer().getEnvironment())
+    assertThat(testJibExtension.getContainer().getEnvironment().get())
         .containsExactly("env1", "val1", "env2", "val2")
         .inOrder();
     System.setProperty("jib.container.extraClasspath", "/d1,/d2,/d3");

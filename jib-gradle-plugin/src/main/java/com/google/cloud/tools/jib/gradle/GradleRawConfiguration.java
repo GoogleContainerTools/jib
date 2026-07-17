@@ -108,7 +108,7 @@ public class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Map<String, String> getEnvironment() {
-    return jibExtension.getContainer().getEnvironment();
+    return jibExtension.getContainer().getEnvironment().get();
   }
 
   @Override
