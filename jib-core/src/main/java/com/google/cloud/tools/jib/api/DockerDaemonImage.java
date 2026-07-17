@@ -49,7 +49,7 @@ public class DockerDaemonImage {
   }
 
   private final ImageReference imageReference;
-  private Path dockerExecutable = CliDockerClient.DEFAULT_DOCKER_CLIENT;
+  private Path dockerExecutable = CliDockerClient.getExistingDefaultDocker();
   private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
