@@ -182,8 +182,11 @@ public class BuildFilesTest {
     Path buildfile =
         Paths.get(Resources.getResource("buildfiles/projects/templating/multiLine.yaml").toURI());
 
+    //    Mockito.when(buildCli.getTemplateParameters())
+    //        .thenReturn(ImmutableMap.of("replace" + "\n" + "this", "creationTime: 1234"));
     Mockito.when(buildCli.getTemplateParameters())
-        .thenReturn(ImmutableMap.of("replace" + "\n" + "this", "creationTime: 1234"));
+        .thenReturn(
+            ImmutableMap.of("replace" + System.lineSeparator() + "this", "creationTime: 1234"));
     JibContainerBuilder jibContainerBuilder =
         BuildFiles.toJibContainerBuilder(
             buildfile.getParent(), buildfile, buildCli, commonCliOptions, consoleLogger);

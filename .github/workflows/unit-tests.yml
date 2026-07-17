@@ -8,11 +8,12 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         java: [8, 11]
+        os: [ubuntu-latest, windows-latest]
     env:
       # for gradle
       TERM: dumb
