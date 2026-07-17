@@ -18,13 +18,17 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
+import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -337,8 +341,14 @@ public class FailoverHttpClient {
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
             .setUseRawRedirectUrls(true)
             .setHeaders(requestHeaders);
-    if (enableRetry && retryOnIoException) {
-      httpRequest.setIOExceptionHandler(createBackOffRetryHandler());
+    if (enableRetry) {
+      final ExponentialBackOff backOff = new ExponentialBackOff();
+      // always retry on "not i/o" errors, likely a server issue
+      httpRequest.setUnsuccessfulResponseHandler(
+          createHttpBackOffUnsuccessfulResponseHandler(backOff));
+      if (retryOnIoException) {
+        httpRequest.setIOExceptionHandler(createBackOffRetryHandler(backOff));
+      }
     }
     if (request.getHttpTimeout() != null) {
       httpRequest.setConnectTimeout(request.getHttpTimeout());
@@ -356,13 +366,30 @@ public class FailoverHttpClient {
     }
   }
 
-  private HttpIOExceptionHandler createBackOffRetryHandler() {
-    return new HttpBackOffIOExceptionHandler(new ExponentialBackOff()) {
+  private HttpIOExceptionHandler createBackOffRetryHandler(BackOff backOff) {
+    return new HttpBackOffIOExceptionHandler(backOff) {
       @Override
       public boolean handleIOException(HttpRequest request, boolean supportsRetry)
           throws IOException {
         String requestUrl = request.getRequestMethod() + " " + request.getUrl();
         if (super.handleIOException(request, supportsRetry)) {
+          logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
+          return true;
+        }
+        logger.accept(LogEvent.warn(requestUrl + " failed and will NOT be retried"));
+        return false;
+      }
+    };
+  }
+
+  private HttpUnsuccessfulResponseHandler createHttpBackOffUnsuccessfulResponseHandler(
+      BackOff backOff) {
+    return new HttpBackOffUnsuccessfulResponseHandler(backOff) {
+      @Override
+      public boolean handleResponse(
+          HttpRequest request, HttpResponse response, boolean supportsRetry) throws IOException {
+        String requestUrl = request.getRequestMethod() + " " + request.getUrl();
+        if (super.handleResponse(request, response, supportsRetry)) {
           logger.accept(LogEvent.warn(requestUrl + " failed and will be retried"));
           return true;
         }

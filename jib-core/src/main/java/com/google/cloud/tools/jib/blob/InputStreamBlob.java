@@ -39,16 +39,24 @@ class InputStreamBlob implements Blob {
     if (isWritten) {
       throw new IllegalStateException("Cannot rewrite Blob backed by an InputStream");
     }
+    if (inputStream.markSupported()) {
+      inputStream.mark(Integer.MAX_VALUE);
+    }
     try (InputStream inStream = this.inputStream) {
       return Digests.computeDigest(inStream, outStream);
 
     } finally {
-      isWritten = true;
+      if (inputStream.markSupported()) {
+        isWritten = false;
+        inputStream.reset();
+      } else {
+        isWritten = true;
+      }
     }
   }
 
   @Override
   public boolean isRetryable() {
-    return false;
+    return inputStream.markSupported();
   }
 }
