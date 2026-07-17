@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -90,7 +91,7 @@ public class BuildContextTest {
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OciManifestTemplate.class;
     Path expectedApplicationLayersCacheDirectory = Paths.get("application/layers");
     Path expectedBaseImageLayersCacheDirectory = Paths.get("base/image/layers");
-    List<FileEntriesLayer> expectedLayerConfigurations =
+    List<LayerObject> expectedLayerConfigurations =
         Collections.singletonList(
             FileEntriesLayer.builder()
                 .addEntry(Paths.get("sourceFile"), AbsoluteUnixPath.get("/path/in/container"))
