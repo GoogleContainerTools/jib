@@ -117,6 +117,8 @@ public class CacheTest {
   private long layerSize2;
   private ImmutableList<FileEntry> layerEntries2;
 
+  private boolean retainSymlinks = false;
+
   @Before
   public void setUp() throws IOException {
     Path directory = temporaryFolder.newFolder().toPath();
@@ -173,7 +175,7 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1, retainSymlinks));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
@@ -183,14 +185,14 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1, retainSymlinks));
+    verifyIsLayer1(cache.retrieve(layerEntries1, retainSymlinks).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
 
     // A source file modification results in the cached layer to be out-of-date and not retrieved.
     Files.setLastModifiedTime(
         layerEntries1.get(0).getSourceFile(), FileTime.from(Instant.now().plusSeconds(1)));
-    Assert.assertFalse(cache.retrieve(layerEntries1).isPresent());
+    Assert.assertFalse(cache.retrieve(layerEntries1, retainSymlinks).isPresent());
   }
 
   @Test
@@ -198,12 +200,12 @@ public class CacheTest {
       throws IOException, CacheDirectoryCreationException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer2(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1, retainSymlinks));
+    verifyIsLayer2(cache.writeUncompressedLayer(layerBlob2, layerEntries2, retainSymlinks));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     verifyIsLayer2(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
-    verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
-    verifyIsLayer2(cache.retrieve(layerEntries2).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.retrieve(layerEntries1, retainSymlinks).orElseThrow(AssertionError::new));
+    verifyIsLayer2(cache.retrieve(layerEntries2, retainSymlinks).orElseThrow(AssertionError::new));
   }
 
   /**
