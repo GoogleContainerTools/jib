@@ -93,22 +93,31 @@ class AuthenticationMethodRetriever
     }
 
     // Checks if the 'WWW-Authenticate' header is present.
-    String authenticationMethod = responseException.getHeaders().getAuthenticate();
-    if (authenticationMethod == null) {
+    List<String> authList = responseException.getHeaders().getAuthenticateAsList();
+    if (authList == null || authList.isEmpty()) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
           .addReason("'WWW-Authenticate' header not found")
           .build();
     }
 
-    // Parses the header to retrieve the components.
-    try {
-      return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties, userAgent, httpClient);
-
-    } catch (RegistryAuthenticationFailedException ex) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)
-          .addReason("Failed get authentication method from 'WWW-Authenticate' header")
-          .build();
+    // try all 'WWW-Authenticate' headers until a working RegistryAuthenticator can be created
+    RegistryErrorException lastExc = null;
+    for (String authenticationMethod : authList) {
+      try {
+        return RegistryAuthenticator.fromAuthenticationMethod(
+            authenticationMethod, registryEndpointRequestProperties, userAgent, httpClient);
+      } catch (RegistryAuthenticationFailedException ex) {
+        if (lastExc == null) {
+          lastExc =
+              new RegistryErrorExceptionBuilder(getActionDescription(), ex)
+                  .addReason(
+                      "Failed getting supported authentication method from 'WWW-Authenticate' header")
+                  .build();
+        }
+      }
     }
+
+    // if none of the RegistryAuthenticators worked, throw the last stored exception
+    throw lastExc;
   }
 }
