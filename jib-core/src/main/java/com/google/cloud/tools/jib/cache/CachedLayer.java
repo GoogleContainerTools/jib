@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.Layer;
@@ -33,6 +34,7 @@ public class CachedLayer implements Layer {
     @Nullable private DescriptorDigest layerDiffId;
     private long layerSize = -1;
     @Nullable private Blob layerBlob;
+    @Nullable private CompressionAlgorithm compressionAlgorithm;
 
     private Builder() {}
 
@@ -56,6 +58,11 @@ public class CachedLayer implements Layer {
       return this;
     }
 
+    public Builder setCompressionAlgorithm(CompressionAlgorithm compressionAlgorithm) {
+      this.compressionAlgorithm = compressionAlgorithm;
+      return this;
+    }
+
     boolean hasLayerBlob() {
       return layerBlob != null;
     }
@@ -70,7 +77,8 @@ public class CachedLayer implements Layer {
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
           layerSize,
-          Preconditions.checkNotNull(layerBlob, "layerBlob required"));
+          Preconditions.checkNotNull(layerBlob, "layerBlob required"),
+          Preconditions.checkNotNull(compressionAlgorithm, "compressionAlgorithm required"));
     }
   }
 
@@ -86,12 +94,18 @@ public class CachedLayer implements Layer {
   private final DescriptorDigest layerDiffId;
   private final BlobDescriptor blobDescriptor;
   private final Blob layerBlob;
+  private final CompressionAlgorithm compressionAlgorithm;
 
   private CachedLayer(
-      DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
+      DescriptorDigest layerDigest,
+      DescriptorDigest layerDiffId,
+      long layerSize,
+      Blob layerBlob,
+      CompressionAlgorithm compressionAlgorithm) {
     this.layerDiffId = layerDiffId;
     this.layerBlob = layerBlob;
     this.blobDescriptor = new BlobDescriptor(layerSize, layerDigest);
+    this.compressionAlgorithm = compressionAlgorithm;
   }
 
   public DescriptorDigest getDigest() {
@@ -110,6 +124,11 @@ public class CachedLayer implements Layer {
   @Override
   public Blob getBlob() {
     return layerBlob;
+  }
+
+  @Override
+  public CompressionAlgorithm getCompressionAlgorithm() {
+    return compressionAlgorithm;
   }
 
   @Override

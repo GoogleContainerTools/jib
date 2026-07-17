@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
@@ -115,10 +116,10 @@ public class JsonToImageTranslator {
         throw new IllegalArgumentException(
             "All layers in the manifest template must have digest set");
       }
-
       layers.add(
           new ReferenceNoDiffIdLayer(
-              new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest())));
+              new BlobDescriptor(layerObjectTemplate.getSize(), layerObjectTemplate.getDigest()),
+              CompressionAlgorithm.fromMediaType(layerObjectTemplate.getMediaType())));
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
@@ -133,7 +134,9 @@ public class JsonToImageTranslator {
       ReferenceNoDiffIdLayer noDiffIdLayer = layers.get(layerIndex);
       DescriptorDigest diffId = diffIds.get(layerIndex);
 
-      imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
+      imageBuilder.addLayer(
+          new ReferenceLayer(
+              noDiffIdLayer.getBlobDescriptor(), diffId, noDiffIdLayer.getCompressionAlgorithm()));
     }
 
     configureBuilderWithContainerConfiguration(imageBuilder, containerConfigurationTemplate);

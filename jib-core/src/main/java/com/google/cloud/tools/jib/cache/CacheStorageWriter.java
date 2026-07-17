@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -54,6 +55,7 @@ import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
 
 /** Writes to the default cache storage engine. */
 class CacheStorageWriter {
@@ -216,7 +218,8 @@ class CacheStorageWriter {
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer writeCompressed(Blob compressedLayerBlob) throws IOException {
+  CachedLayer writeCompressed(Blob compressedLayerBlob, CompressionAlgorithm compressionAlgorithm)
+      throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
@@ -242,6 +245,7 @@ class CacheStorageWriter {
           .setLayerDiffId(writtenLayer.layerDiffId)
           .setLayerSize(writtenLayer.layerSize)
           .setLayerBlob(Blobs.from(layerFile))
+          .setCompressionAlgorithm(compressionAlgorithm)
           .build();
     }
   }
@@ -265,7 +269,10 @@ class CacheStorageWriter {
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer writeUncompressed(Blob uncompressedLayerBlob, @Nullable DescriptorDigest selector)
+  CachedLayer writeUncompressed(
+      Blob uncompressedLayerBlob,
+      CompressionAlgorithm compressionAlgorithm,
+      @Nullable DescriptorDigest selector)
       throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());
@@ -279,7 +286,8 @@ class CacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeUncompressedLayerBlobToDirectory(uncompressedLayerBlob, temporaryLayerDirectory);
+          writeUncompressedLayerBlobToDirectory(
+              uncompressedLayerBlob, compressionAlgorithm, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
@@ -293,7 +301,8 @@ class CacheStorageWriter {
               .setLayerDigest(writtenLayer.layerDigest)
               .setLayerDiffId(writtenLayer.layerDiffId)
               .setLayerSize(writtenLayer.layerSize)
-              .setLayerBlob(Blobs.from(layerFile));
+              .setLayerBlob(Blobs.from(layerFile))
+              .setCompressionAlgorithm(compressionAlgorithm);
 
       // Write the selector file.
       if (selector != null) {
@@ -309,9 +318,12 @@ class CacheStorageWriter {
    *
    * @param diffId the layer blob's diff ID
    * @param compressedBlob the blob to save
+   * @param compressionAlgorithm the compression algorithm of the blob
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob) throws IOException {
+  CachedLayer writeTarLayer(
+      DescriptorDigest diffId, Blob compressedBlob, CompressionAlgorithm compressionAlgorithm)
+      throws IOException {
     Files.createDirectories(cacheStorageFiles.getLocalDirectory());
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
@@ -341,6 +353,7 @@ class CacheStorageWriter {
           .setLayerDiffId(diffId)
           .setLayerSize(layerBlobDescriptor.getSize())
           .setLayerBlob(Blobs.from(destination.resolve(fileName)))
+          .setCompressionAlgorithm(compressionAlgorithm)
           .build();
     }
   }
@@ -417,20 +430,16 @@ class CacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   private WrittenLayer writeUncompressedLayerBlobToDirectory(
-      Blob uncompressedLayerBlob, Path layerDirectory) throws IOException {
+      Blob uncompressedLayerBlob, CompressionAlgorithm compressionAlgorithm, Path layerDirectory)
+      throws IOException {
     Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
             new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile)))) {
-      // Writes the layer with GZIP compression. The original bytes are captured as the layer's
-      // diff ID and the bytes outputted from the GZIP compression are captured as the layer's
-      // content descriptor.
-      GZIPOutputStream compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
-      DescriptorDigest layerDiffId = uncompressedLayerBlob.writeTo(compressorStream).getDigest();
-
-      // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
-      compressorStream.close();
+      DescriptorDigest layerDiffId =
+          writeUncompressedLayerToOutputStream(
+              uncompressedLayerBlob, compressionAlgorithm, compressedDigestOutputStream);
       BlobDescriptor blobDescriptor = compressedDigestOutputStream.computeDigest();
       DescriptorDigest layerDigest = blobDescriptor.getDigest();
       long layerSize = blobDescriptor.getSize();
@@ -441,6 +450,34 @@ class CacheStorageWriter {
 
       return new WrittenLayer(layerDigest, layerDiffId, layerSize);
     }
+  }
+
+  /**
+   * Writes the layer with compression. The original bytes are captured as the layer's diff ID and
+   * the bytes outputted from the compression are captured as the layer's content descriptor.
+   */
+  private DescriptorDigest writeUncompressedLayerToOutputStream(
+      Blob uncompressedLayerBlob,
+      CompressionAlgorithm compressionAlgorithm,
+      CountingDigestOutputStream compressedDigestOutputStream)
+      throws IOException {
+    OutputStream compressorStream;
+    switch (compressionAlgorithm) {
+      case GZIP:
+        compressorStream = new GZIPOutputStream(compressedDigestOutputStream);
+        break;
+      case ZSTD:
+        compressorStream = new ZstdCompressorOutputStream(compressedDigestOutputStream);
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "Unsupported compression algorithm " + compressionAlgorithm);
+    }
+    DescriptorDigest layerDiffId = uncompressedLayerBlob.writeTo(compressorStream).getDigest();
+
+    // The OutputStream must be closed in order to write out the remaining compressed data.
+    compressorStream.close();
+    return layerDiffId;
   }
 
   /**

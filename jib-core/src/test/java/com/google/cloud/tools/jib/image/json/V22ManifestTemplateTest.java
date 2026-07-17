@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate.ContentDescriptorTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableMap;
@@ -53,10 +54,31 @@ public class V22ManifestTemplateTest {
     manifestJson.addLayer(
         1000_000,
         DescriptorDigest.fromHash(
-            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.GZIP);
 
     // Serializes the JSON object.
     Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUnsupportedZstdCompression() throws DigestException {
+    V22ManifestTemplate manifestJson = new V22ManifestTemplate();
+    manifestJson.addLayer(
+        1000_000,
+        DescriptorDigest.fromHash(
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.ZSTD);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUnsupportedNoCompression() throws DigestException {
+    V22ManifestTemplate manifestJson = new V22ManifestTemplate();
+    manifestJson.addLayer(
+        1000_000,
+        DescriptorDigest.fromHash(
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
+        CompressionAlgorithm.NONE);
   }
 
   @Test

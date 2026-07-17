@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -120,30 +121,39 @@ public class Cache {
 
   /**
    * Saves a cache entry with a compressed layer {@link Blob}. Use {@link
-   * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an uncompressed layer
-   * {@link Blob} and include a selector.
+   * #writeUncompressedLayer(Blob, CompressionAlgorithm, ImmutableList)} to save a cache entry with
+   * an uncompressed layer {@link Blob} and include a selector.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
+   * @param compressionAlgorithm the compression algorithm of the layer
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
-    return cacheStorageWriter.writeCompressed(compressedLayerBlob);
+  public CachedLayer writeCompressedLayer(
+      Blob compressedLayerBlob, CompressionAlgorithm compressionAlgorithm) throws IOException {
+    return cacheStorageWriter.writeCompressed(compressedLayerBlob, compressionAlgorithm);
   }
 
   /**
    * Saves a cache entry with an uncompressed layer {@link Blob} and an additional selector digest.
-   * Use {@link #writeCompressedLayer(Blob)} to save a compressed layer {@link Blob}.
+   * Use {@link #writeCompressedLayer(Blob, CompressionAlgorithm)} to save a compressed layer {@link
+   * Blob}.
    *
    * @param uncompressedLayerBlob the layer {@link Blob}
+   * @param compressionAlgorithm the layer compression algorithm
    * @param layerEntries the layer entries that make up the layer
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeUncompressedLayer(
-      Blob uncompressedLayerBlob, ImmutableList<FileEntry> layerEntries) throws IOException {
+      Blob uncompressedLayerBlob,
+      CompressionAlgorithm compressionAlgorithm,
+      ImmutableList<FileEntry> layerEntries)
+      throws IOException {
     return cacheStorageWriter.writeUncompressed(
-        uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
+        uncompressedLayerBlob,
+        compressionAlgorithm,
+        LayerEntriesSelector.generateSelector(layerEntries));
   }
 
   /**
@@ -152,12 +162,14 @@ public class Cache {
    *
    * @param diffId the diff id
    * @param compressedBlob the compressed layer blob
+   * @param compressionAlgorithm the compression algorithm of the blob
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob)
+  public CachedLayer writeTarLayer(
+      DescriptorDigest diffId, Blob compressedBlob, CompressionAlgorithm compressionAlgorithm)
       throws IOException {
-    return cacheStorageWriter.writeTarLayer(diffId, compressedBlob);
+    return cacheStorageWriter.writeTarLayer(diffId, compressedBlob, compressionAlgorithm);
   }
 
   /**

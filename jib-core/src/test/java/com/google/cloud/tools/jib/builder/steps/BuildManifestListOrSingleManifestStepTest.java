@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildContext;
@@ -52,6 +53,7 @@ public class BuildManifestListOrSingleManifestStepTest {
     Mockito.when(buildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.doReturn(V22ManifestTemplate.class).when(buildContext).getTargetFormat();
     Mockito.when(layer.getBlobDescriptor()).thenReturn(new BlobDescriptor(0, null));
+    Mockito.when(layer.getCompressionAlgorithm()).thenReturn(CompressionAlgorithm.GZIP);
 
     image1 =
         Image.builder(V22ManifestTemplate.class)

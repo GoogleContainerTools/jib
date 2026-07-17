@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 
@@ -48,5 +49,11 @@ public class DigestOnlyLayer implements Layer {
   @Override
   public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
     throw new LayerPropertyNotFoundException("Diff ID not available for digest-only layer");
+  }
+
+  @Override
+  public CompressionAlgorithm getCompressionAlgorithm() throws LayerPropertyNotFoundException {
+    throw new LayerPropertyNotFoundException(
+        "CompressionAlgorithm not available for digest-only layer");
   }
 }
