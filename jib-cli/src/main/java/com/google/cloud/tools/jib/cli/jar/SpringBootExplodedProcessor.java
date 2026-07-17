@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -135,14 +136,23 @@ public class SpringBootExplodedProcessor implements ArtifactProcessor {
   }
 
   @Override
-  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) {
-    ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
-    entrypoint.add("java");
-    entrypoint.addAll(jvmFlags);
-    entrypoint.add("-cp");
-    entrypoint.add(JarLayers.APP_ROOT.toString());
-    entrypoint.add("org.springframework.boot.loader.JarLauncher");
-    return entrypoint.build();
+  public ImmutableList<String> computeEntrypoint(List<String> jvmFlags) throws IOException {
+    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+      String mainClass =
+          jarFile.getManifest().getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+      if (mainClass == null) {
+        throw new IllegalArgumentException(
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's "
+                + "manifest (`META-INF/MANIFEST.MF` in the JAR).");
+      }
+      ImmutableList.Builder<String> entrypoint = ImmutableList.builder();
+      entrypoint.add("java");
+      entrypoint.addAll(jvmFlags);
+      entrypoint.add("-cp");
+      entrypoint.add(JarLayers.APP_ROOT.toString());
+      entrypoint.add(mainClass);
+      return entrypoint.build();
+    }
   }
 
   @Override
