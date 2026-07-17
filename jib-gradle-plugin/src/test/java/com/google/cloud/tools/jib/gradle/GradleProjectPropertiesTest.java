@@ -511,7 +511,7 @@ public class GradleProjectPropertiesTest {
     project.getTasks().getByName("bootWar").setEnabled(false);
 
     assertThat(gradleProjectProperties.getWarFilePath())
-        .isEqualTo(outputDir.resolve("my-app.war").toString());
+        .isEqualTo(outputDir.resolve("my-app-plain.war").toString());
   }
 
   @Test
