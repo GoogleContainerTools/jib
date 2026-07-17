@@ -1,0 +1,475 @@
+// define all versioned plugins here and apply in subprojects as necessary without version
+plugins {
+    id 'com.github.sherter.google-java-format' version '0.9' apply false
+    id 'net.ltgt.errorprone' version '3.1.0' apply false
+    id 'net.researchgate.release' version '3.0.2' apply false
+    id 'com.gradle.plugin-publish' version '1.2.0' apply false
+    id 'io.freefair.maven-plugin' version '8.0.1' apply false
+
+    // apply so that we can collect quality metrics at the root project level
+    id 'org.sonarqube' version '4.0.0.2929'
+}
+
+/* PROJECT DEPENDENCY VERSIONS */
+// define all common versioned dependencies here
+project.ext.dependencyStrings = [
+        // For Google libraries, check the following boms for best compatibility.
+        // - https://github.com/googleapis/java-shared-dependencies
+        // - https://github.com/googleapis/java-cloud-bom
+        GOOGLE_HTTP_CLIENT: 'com.google.http-client:google-http-client:1.42.2',
+        GOOGLE_HTTP_CLIENT_APACHE_V2: 'com.google.http-client:google-http-client-apache-v2:1.42.2',
+        GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: 'com.google.auth:google-auth-library-oauth2-http:1.10.0',
+        GUAVA: 'com.google.guava:guava:32.1.2-jre',
+        JSR305: 'com.google.code.findbugs:jsr305:3.0.2', // transitively pulled in by GUAVA
+
+        // for Build Plan and Jib Plugins Extension API
+        BUILD_PLAN: 'com.google.cloud.tools:jib-build-plan:0.4.0',
+        EXTENSION_COMMON: 'com.google.cloud.tools:jib-plugins-extension-common:0.2.0',
+        GRADLE_EXTENSION: 'com.google.cloud.tools:jib-gradle-plugin-extension-api:0.4.0',
+        MAVEN_EXTENSION: 'com.google.cloud.tools:jib-maven-plugin-extension-api:0.4.0',
+
+        COMMONS_COMPRESS: 'org.apache.commons:commons-compress:1.21',
+        ZSTD_JNI: 'com.github.luben:zstd-jni:1.5.5-5',
+        COMMONS_TEXT: 'org.apache.commons:commons-text:1.10.0',
+        JACKSON_BOM: 'com.fasterxml.jackson:jackson-bom:2.15.2',
+        JACKSON_DATABIND: 'com.fasterxml.jackson.core:jackson-databind',
+        JACKSON_DATAFORMAT_YAML: 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml',
+        JACKSON_DATATYPE_JSR310: 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
+        ASM: 'org.ow2.asm:asm:9.5',
+        PICOCLI: 'info.picocli:picocli:4.7.4',
+
+        MAVEN_API: 'org.apache.maven:maven-plugin-api:3.9.3',
+        MAVEN_CORE: 'org.apache.maven:maven-core:3.9.3',
+        MAVEN_COMPAT: 'org.apache.maven:maven-compat:3.9.3',
+        MAVEN_PLUGIN_ANNOTATIONS: 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.9.0',
+
+        //test
+        TRUTH: 'com.google.truth:truth:1.1.5',
+        TRUTH8: 'com.google.truth.extensions:truth-java8-extension:1.1.5', // should match TRUTH version
+        JUNIT: 'junit:junit:4.13.2',
+        JUNIT_PARAMS: 'pl.pragmatists:JUnitParams:1.1.1',
+        MAVEN_TESTING_HARNESS: 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0',
+        MAVEN_VERIFIER: 'org.apache.maven.shared:maven-verifier:1.8.0',
+        MOCKITO_CORE: 'org.mockito:mockito-core:4.11.0',
+        MOCKITO_INLINE: 'org.mockito:mockito-inline:4.11.0',
+        SISU_PLEXUS: 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.5',
+        SLF4J_API: 'org.slf4j:slf4j-api:2.0.7',
+        SLF4J_SIMPLE: 'org.slf4j:slf4j-simple:2.0.9',
+        SYSTEM_RULES:  'com.github.stefanbirkner:system-rules:1.19.0',
+        JBCRYPT: 'org.mindrot:jbcrypt:0.4',
+]
+
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+repositories {
+    mavenCentral()
+}
+
+// `java-library` must be applied before `java`.
+// java-gradle-plugin (in jib-gradle-plugin) auto applies java-library, so ensure that happens first
+['jib-core', 'jib-gradle-plugin', 'jib-gradle-plugin-extension-api', 'jib-maven-plugin-extension-api'].each { projectName ->
+    project(projectName).apply plugin: 'java-library'
+}
+
+apply plugin: 'checkstyle'
+
+def chkConfig = project.configurations.getByName("checkstyle").resolve().find {
+    it.name.startsWith("checkstyle")
+};
+
+
+subprojects {
+    group 'com.google.cloud.tools'
+
+    repositories {
+        mavenCentral()
+    }
+
+    apply plugin: 'java-library'
+    apply plugin: 'checkstyle'
+    apply plugin: 'com.github.sherter.google-java-format'
+    apply plugin: 'net.ltgt.errorprone'
+    apply plugin: 'jacoco'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    compileJava.options.encoding = 'UTF-8'
+    compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
+    compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
+
+    // Use this to ensure we correctly override transitive dependencies
+    // TODO: There might be a plugin that does this
+    task ensureTransitiveDependencyOverrides {
+        def dependenciesList = [dependencyStrings.GOOGLE_HTTP_CLIENT, dependencyStrings.GOOGLE_HTTP_CLIENT_APACHE_V2]
+        def rules = dependenciesList.collectEntries{[/*name*/ it.split(':')[1], /*version*/ it.split(':')[2]]}
+        doLast {
+            configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+                def dependency = artifact.moduleVersion.id
+                if (rules[dependency.name] && rules[dependency.name] != dependency.version) {
+                    throw new GradleException(
+                            dependency.name + ' version error in ' + project
+                                    + ', expected:' + rules[dependency.name]
+                                    + ', found:' + dependency.version);
+                }
+            }
+        }
+    }
+    compileJava.dependsOn ensureTransitiveDependencyOverrides
+    /* PROJECT DEPENDENCY VERSIONS */
+
+    /* ERROR PRONE */
+    dependencies {
+        // NullAway errorprone plugin
+        annotationProcessor 'com.uber.nullaway:nullaway:0.10.7'
+        errorprone 'com.google.errorprone:error_prone_core:2.10.0'
+        // Using github.com/google/error-prone-javac is required when running on
+        // JDK 8. Remove when migrating to JDK 11.
+        if (System.getProperty('java.version').startsWith('1.8.')) {
+            errorproneJavac('com.google.errorprone:javac:9+181-r4173-1')
+        }
+    }
+
+    // Adds NullAway errorprone checks.
+    tasks.withType(JavaCompile) {
+        if (!name.toLowerCase().contains('test')) {
+            options.errorprone {
+                check('NullAway', CheckSeverity.ERROR)
+                option('NullAway:ExcludedFieldAnnotations', 'org.apache.maven.plugins.annotations.Component')
+                option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
+            }
+        }
+    }
+    /* ERROR PRONE */
+
+    /* GOOGLE JAVA FORMAT */
+    googleJavaFormat {
+        toolVersion = '1.7'
+    }
+    check.dependsOn verifyGoogleJavaFormat
+    /* GOOGLE JAVA FORMAT */
+
+    /* CHECKSTYLE */
+    checkstyle {
+        toolVersion = '9.3'
+        def googleChecks = resources.text.fromArchiveEntry(chkConfig, 'google_checks.xml').asString()
+        // use google checks from the jar
+//
+        // set the location of the suppressions file referenced in google_checks.xml
+        configProperties['org.checkstyle.google.suppressionfilter.config'] = getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()
+
+        // add in copyright header check on only java files (replace the last </module> in file)
+        def copyrightChecks = '''
+        <module name="RegexpHeader">
+            <property name="headerFile" value="${config_loc}/copyright-java.header"/>
+            <property name="fileExtensions" value="java"/>
+            <property name="id" value="header"/>
+        </module>
+    '''
+
+        def supressionChecks = '''
+<module name="SuppressionFilter">
+    <property name="file" value="'''+getConfigDirectory().file('checkstyle-suppressions.xml').get().toString()+'''"/>
+</module>
+    </module>
+    '''
+        googleChecks = googleChecks.substring(0, googleChecks.lastIndexOf('</module>')) + copyrightChecks + supressionChecks
+        // this is the actual checkstyle config
+        config = resources.text.fromString(googleChecks)
+
+        maxErrors = 0
+        maxWarnings = 0
+    }
+    /* CHECKSTYLE */
+
+    /* TEST CONFIG */
+    tasks.withType(Test).configureEach  {
+        reports.html.outputLocation.set file("${reporting.baseDir}/${name}")
+    }
+
+    test {
+        testLogging {
+            showStandardStreams = true
+            exceptionFormat = 'full'
+        }
+        doFirst {
+            if (JavaVersion.current().getMajorVersion().toInteger() >= 17) {
+                jvmArgs = [
+                        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+                ]
+            }
+        }
+    }
+    // jar to export tests classes for import in other project by doing:
+    // testCompile project(path:':project-name', configuration:'tests')
+    task testJar(type: Jar) {
+        from sourceSets.test.output.classesDirs
+        archiveClassifier = 'tests'
+    }
+    // to import resources do: sourceSets.test.resources.srcDirs project(':project-name').sourceSets.test.resources
+
+    configurations {
+        tests
+    }
+
+    artifacts {
+        tests testJar
+    }
+    /* TEST CONFIG */
+
+    /* INTEGRATION TESTS */
+    sourceSets {
+        integrationTest {
+            java.srcDir file('src/integration-test/java')
+            resources.srcDir file('src/integration-test/resources')
+        }
+    }
+
+    configurations {
+        integrationTestImplementation.extendsFrom testImplementation
+        integrationTestRuntime.extendsFrom testRuntime
+    }
+
+    dependencies {
+        integrationTestImplementation sourceSets.main.output
+        integrationTestImplementation sourceSets.test.output
+    }
+
+    // Integration tests must be run explicitly
+    task integrationTest(type: Test) {
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+        systemProperty '_JIB_DISABLE_USER_AGENT', true
+    }
+
+
+    task integrationTestJar(type: Jar) {
+        from sourceSets.integrationTest.output.classesDirs
+        archiveClassifier = 'integration-tests'
+    }
+
+    configurations {
+        integrationTests
+    }
+
+    artifacts {
+        integrationTests integrationTestJar
+    }
+
+    integrationTest {
+        testLogging {
+            showStandardStreams = true
+            exceptionFormat = 'full'
+        }
+    }
+    /* INTEGRATION TESTS */
+
+    /* JAVADOC ENFORCEMENT */
+    // Fail build on javadoc warnings
+    tasks.withType(Javadoc) {
+//    options.addBooleanOption('Xwerror', true)
+    }
+    assemble.dependsOn javadoc
+    /* JAVADOC ENFORCEMENT */
+
+    /* JAR */
+    jar {
+        manifest {
+            attributes 'Implementation-Title': project.name,
+                    'Implementation-Version': archiveVersion,
+                    'Built-By': System.getProperty('user.name'),
+                    'Built-Date': new Date(),
+                    'Built-JDK': System.getProperty('java.version'),
+                    'Built-Gradle': gradle.gradleVersion
+        }
+    }
+    normalization {
+        runtimeClasspath {
+            metaInf {
+                ignoreAttribute("Built-By")
+                ignoreAttribute("Built-Date")
+            }
+        }
+    }
+    /* JAR */
+
+    /* MAVEN CENTRAL RELEASES */
+    // for projects that release to maven central
+    project.ext.configureMavenRelease = {
+        apply plugin: 'maven-publish'
+        task sourceJar(type: Jar) {
+            from sourceSets.main.allJava
+            archiveClassifier = 'sources'
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            from javadoc.destinationDir
+            archiveClassifier = 'javadoc'
+        }
+
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    pom {
+                        // to be filled by subproject after calling configure configureMavenRelease
+                        // name = ''
+                        // description = ''
+
+                        url = 'https://github.com/GoogleContainerTools/jib'
+                        inceptionYear = '2018'
+
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                                distribution = 'repo'
+                            }
+                        }
+                        developers {
+                            developer {
+                                id = 'chanseokoh'
+                                name = 'Chanseok Oh'
+                                email = 'chanseok@google.com'
+                            }
+                            developer {
+                                id = 'loosebazooka'
+                                name = 'Appu Goundan'
+                                email = 'appu@google.com'
+                            }
+                            developer {
+                                id = 'TadCordle'
+                                name = 'Tad Cordle'
+                                email = 'tcordle@google.com'
+                            }
+                            developer {
+                                id = 'briandealwis'
+                                name = 'Brian de Alwis'
+                                email = 'bdealwis@google.com'
+                            }
+                            developer {
+                                id = 'coollog'
+                                name = 'Qingyang Chen'
+                            }
+                        }
+                        scm {
+                            url = 'https://github.com/GoogleContainerTools/jib'
+                            connection = 'scm:https://github.com/GoogleContainerTools/jib.git'
+                            developerConnection = 'scm:git://github.com/GoogleContainerTools/jib.git'
+                        }
+                    }
+                }
+            }
+        }
+        generatePomFileForMavenJavaPublication {
+            destination = file("${project.buildDir}/pom/${project.name}-${project.version}.pom")
+        }
+        // define a special install task that handles installing locally for manual testing
+        task install {
+            dependsOn publishToMavenLocal
+        }
+
+        // For kokoro sign and release to maven central
+        task prepareRelease(type: Copy) {
+            from jar
+            from sourceJar
+            from javadocJar
+            from generatePomFileForMavenJavaPublication
+            into "${project.buildDir}/release-artifacts"
+            dependsOn build
+            dependsOn cleanPrepareRelease
+        }
+    }
+    /* MAVEN CENTRAL RELEASE */
+
+    /* INCLUDED PROJECT DEPENDENCY HELPER */
+    // to keep track of all source projects
+    project.ext.sourceProjects = []
+    // sourceProject(Project) accepts a project and adds it as a dependency in a special manner:
+    // 1. force evaluation of the project first
+    // 2. add the project classes as "compileOnly" and make it available to tests in "testImplementation"
+    // 3. add the project's depedencies as "implementation"
+    // 4. remove any transitive reference of any sourceProject depenency that may have appeared
+    // 5. add the project's classes to the final jar
+    // Other nice effects (vs shadowJar)
+    // 1. Generated poms will be correct
+    // 2. Configuration is isolated to this single "sourceProject" call
+    // 3. These configurations are compliant with IDEs
+    project.ext.sourceProject = { Project dependencyProject ->
+        // make sure those projects are evaluated first so we know their dependencies
+        project.evaluationDependsOn dependencyProject.path
+        // add the sourceProjecect dependency
+        def dependencyProjectClasses = dependencyProject.sourceSets.main.output
+        dependencies {
+            // add the dependencyProject classes as compileOnly, make it available to tests
+            compileOnly(dependencyProject) { transitive = false }
+            testImplementation dependencyProjectClasses
+            // add dependencyProject's dependencies as implementation dependencies
+            implementation dependencyProject.configurations.implementation.dependencies
+            if (dependencyProject.configurations.hasProperty('api')) {
+                implementation dependencyProject.configurations.api.dependencies
+            }
+        }
+        // keep track of all dependencyProjects for removal
+        sourceProjects += dependencyProject
+        // if we find any project dependencies that were brought in transitively, go remove them
+        project.configurations.implementation.dependencies.removeAll { d ->
+            return d instanceof ProjectDependency && sourceProjects.contains(d.dependencyProject)
+        }
+        // adds dependencyProject's classes to jar (fat jar-esque)
+        jar {
+            from dependencyProjectClasses
+        }
+        // also configure the java-gradle-plugin if necessary
+        if (project.hasProperty('gradlePlugin')) {
+            project.tasks.pluginUnderTestMetadata.pluginClasspath.from dependencyProjectClasses
+        }
+    }
+
+    // ensure no dependencies in the implementation group are project dependencies
+    project.ext.ensureNoProjectDependencies = {
+        project.afterEvaluate {
+            project.configurations.implementation.dependencies.each { dependency ->
+                if (dependency instanceof ProjectDependency) {
+                    throw new GradleException('disallowed project dependency:' + dependency + ', in project:' + project);
+                }
+            }
+        }
+    }
+
+    /* TEST COVERAGE */
+    jacocoTestReport {
+        reports {
+            xml.required = true
+            html.required = false
+        }
+    }
+    /* TEST COVERAGE */
+
+    /* INCLUDED PROJECT DEPENDENCY HELPER */
+
+    /* LOCAL DEVELOPMENT HELPER TASKS */
+    tasks.register('dev') {
+        classes.dependsOn tasks.googleJavaFormat
+        dependsOn check
+        dependsOn javadoc
+    }
+
+    tasks.register('devFull') {
+        dependsOn dev
+        dependsOn integrationTest
+    }
+    /* LOCAL DEVELOPMENT HELPER TASKS */
+}
+
+/* SONARQUBE */
+sonarqube {
+    properties {
+        property 'sonar.projectName', 'jib'
+        property 'sonar.projectKey', 'GoogleContainerTools_jib'
+        property 'sonar.host.url', 'https://sonarcloud.io'
+        property 'sonar.organization', 'googlecontainertools-1'
+    }
+}
+/* SONARQUBE */
