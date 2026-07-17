@@ -145,6 +145,139 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
+  public void testGetManifest_ociWithBaseImageAnnotations()
+      throws IOException, DigestException, LayerPropertyNotFoundException {
+    Image.Builder testImageBuilder =
+        Image.builder(OciManifestTemplate.class)
+            .setCreated(Instant.ofEpochSecond(20))
+            .setArchitecture("amd64")
+            .setOs("linux")
+            .setBaseImageName("alpine:3.18")
+            .setBaseImageDigest(
+                "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+
+    DescriptorDigest fakeDigest =
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+    testImageBuilder.addLayer(
+        new Layer() {
+          @Override
+          public Blob getBlob() throws LayerPropertyNotFoundException {
+            return Blobs.from("ignored");
+          }
+
+          @Override
+          public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+            return new BlobDescriptor(1000, fakeDigest);
+          }
+
+          @Override
+          public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+            return fakeDigest;
+          }
+        });
+
+    ImageToJsonTranslator translator = new ImageToJsonTranslator(testImageBuilder.build());
+    JsonTemplate containerConfiguration = translator.getContainerConfiguration();
+    BlobDescriptor blobDescriptor = Digests.computeDigest(containerConfiguration);
+    OciManifestTemplate manifestTemplate =
+        translator.getManifestTemplate(OciManifestTemplate.class, blobDescriptor);
+
+    Assert.assertNotNull(manifestTemplate.getAnnotations());
+    Assert.assertEquals(
+        "alpine:3.18", manifestTemplate.getAnnotations().get("org.opencontainers.image.base.name"));
+    Assert.assertEquals(
+        "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        manifestTemplate.getAnnotations().get("org.opencontainers.image.base.digest"));
+  }
+
+  @Test
+  public void testGetManifest_v22NoAnnotations()
+      throws IOException, DigestException, LayerPropertyNotFoundException {
+    Image.Builder testImageBuilder =
+        Image.builder(V22ManifestTemplate.class)
+            .setCreated(Instant.ofEpochSecond(20))
+            .setArchitecture("amd64")
+            .setOs("linux")
+            .setBaseImageName("alpine:3.18")
+            .setBaseImageDigest(
+                "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+
+    DescriptorDigest fakeDigest =
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+    testImageBuilder.addLayer(
+        new Layer() {
+          @Override
+          public Blob getBlob() throws LayerPropertyNotFoundException {
+            return Blobs.from("ignored");
+          }
+
+          @Override
+          public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+            return new BlobDescriptor(1000, fakeDigest);
+          }
+
+          @Override
+          public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+            return fakeDigest;
+          }
+        });
+
+    ImageToJsonTranslator translator = new ImageToJsonTranslator(testImageBuilder.build());
+    JsonTemplate containerConfiguration = translator.getContainerConfiguration();
+    BlobDescriptor blobDescriptor = Digests.computeDigest(containerConfiguration);
+    V22ManifestTemplate manifestTemplate =
+        translator.getManifestTemplate(V22ManifestTemplate.class, blobDescriptor);
+
+    // V22 (Docker) manifests should not have OCI annotations
+    String json = JsonTemplateMapper.toUtf8String(manifestTemplate);
+    Assert.assertFalse(json.contains("org.opencontainers.image.base.name"));
+    Assert.assertFalse(json.contains("org.opencontainers.image.base.digest"));
+  }
+
+  @Test
+  public void testGetManifest_ociNoBaseImage()
+      throws IOException, DigestException, LayerPropertyNotFoundException {
+    // Image without base image info (e.g., scratch)
+    Image.Builder testImageBuilder =
+        Image.builder(OciManifestTemplate.class)
+            .setCreated(Instant.ofEpochSecond(20))
+            .setArchitecture("amd64")
+            .setOs("linux");
+
+    DescriptorDigest fakeDigest =
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+    testImageBuilder.addLayer(
+        new Layer() {
+          @Override
+          public Blob getBlob() throws LayerPropertyNotFoundException {
+            return Blobs.from("ignored");
+          }
+
+          @Override
+          public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+            return new BlobDescriptor(1000, fakeDigest);
+          }
+
+          @Override
+          public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+            return fakeDigest;
+          }
+        });
+
+    ImageToJsonTranslator translator = new ImageToJsonTranslator(testImageBuilder.build());
+    JsonTemplate containerConfiguration = translator.getContainerConfiguration();
+    BlobDescriptor blobDescriptor = Digests.computeDigest(containerConfiguration);
+    OciManifestTemplate manifestTemplate =
+        translator.getManifestTemplate(OciManifestTemplate.class, blobDescriptor);
+
+    // No base image info means no annotations
+    Assert.assertNull(manifestTemplate.getAnnotations());
+  }
+
+  @Test
   public void testPortListToMap() {
     ImmutableSet<Port> input = ImmutableSet.of(Port.tcp(1000), Port.udp(2000));
     ImmutableSortedMap<String, Map<?, ?>> expected =

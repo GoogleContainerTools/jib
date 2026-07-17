@@ -17,9 +17,12 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -77,6 +80,9 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
   /** The list of layer references. */
   private final List<ContentDescriptorTemplate> layers = new ArrayList<>();
 
+  /** The manifest-level annotations. */
+  @Nullable private Map<String, String> annotations;
+
   @Override
   public int getSchemaVersion() {
     return schemaVersion;
@@ -106,5 +112,28 @@ public class OciManifestTemplate implements BuildableManifestTemplate {
   @Override
   public void addLayer(long size, DescriptorDigest digest) {
     layers.add(new ContentDescriptorTemplate(LAYER_MEDIA_TYPE, size, digest));
+  }
+
+  /**
+   * Returns the manifest-level annotations.
+   *
+   * @return the annotations map, or {@code null} if not set
+   */
+  @Nullable
+  public Map<String, String> getAnnotations() {
+    return annotations == null ? null : ImmutableMap.copyOf(annotations);
+  }
+
+  /**
+   * Adds a manifest-level annotation.
+   *
+   * @param key the annotation key
+   * @param value the annotation value
+   */
+  public void addAnnotation(String key, String value) {
+    if (annotations == null) {
+      annotations = new LinkedHashMap<>();
+    }
+    annotations.put(key, value);
   }
 }
