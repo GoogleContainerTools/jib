@@ -10,5 +10,8 @@ if [ "${KOKORO_JOB_CLUSTER}" = "GCP_UBUNTU_DOCKER" ]; then
   JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS} -Xlog:os+container=error"
 fi
 
+echo "java version:"
+java -version
+
 cd github/jib
 ./gradlew :jib-maven-plugin:prepareRelease
