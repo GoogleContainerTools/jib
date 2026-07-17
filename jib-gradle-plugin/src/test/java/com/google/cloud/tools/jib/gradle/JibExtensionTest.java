@@ -453,6 +453,8 @@ public class JibExtensionTest {
     assertThat(testJibExtension.getTo().getTags()).containsExactly("tag1", "tag2", "tag3");
     System.setProperty("jib.to.credHelper", "credHelper");
     assertThat(testJibExtension.getTo().getCredHelper().getHelper()).isEqualTo("credHelper");
+    System.setProperty("jib.to.enablePlatformTags", "true");
+    assertThat(testJibExtension.getTo().getEnablePlatformTags()).isTrue();
 
     System.setProperty("jib.container.appRoot", "appRoot");
     assertThat(testJibExtension.getContainer().getAppRoot()).isEqualTo("appRoot");
