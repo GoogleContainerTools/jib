@@ -233,14 +233,17 @@ public class JibBuildRunner {
 
       // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {
+        createParentDirectories(imageDigestOutputPath);
         String imageDigest = jibContainer.getDigest().toString();
         Files.write(imageDigestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
       }
       if (imageIdOutputPath != null) {
+        createParentDirectories(imageIdOutputPath);
         String imageId = jibContainer.getImageId().toString();
         Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
       }
       if (imageJsonOutputPath != null) {
+        createParentDirectories(imageJsonOutputPath);
         ImageMetadataOutput metadataOutput = ImageMetadataOutput.fromJibContainer(jibContainer);
         String imageJson = metadataOutput.toJson();
         Files.write(imageJsonOutputPath, imageJson.getBytes(StandardCharsets.UTF_8));
@@ -326,4 +329,11 @@ public class JibBuildRunner {
     this.imageJsonOutputPath = imageJsonOutputPath;
     return this;
   }
+
+  private static void createParentDirectories(Path filePath) throws IOException {
+    Path parent = filePath.getParent();
+    if (parent != null)
+      Files.createDirectories(parent);
+  }
+
 }
