@@ -238,12 +238,12 @@ public class RegistryAuthenticator {
   @VisibleForTesting
   String getRedactedAuthRequestParameters(
       @Nullable Credential credential, Map<String, String> repositoryScopes) {
-    String serviceScope = getServiceScopeRequestParameters(repositoryScopes);
-    return isOAuth2Auth(credential)
-        ? serviceScope
-            + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
-            + "&grant_type=refresh_token&refresh_token=<redacted>"
-        : serviceScope;
+    String parameters = getAuthRequestParameters(credential, repositoryScopes);
+    if (isOAuth2Auth(credential)) {
+      String password = Verify.verifyNotNull(credential).getPassword();
+      return parameters.replace("&refresh_token=" + password, "&refresh_token=<redacted>");
+    }
+    return parameters;
   }
 
   @VisibleForTesting
