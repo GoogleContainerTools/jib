@@ -255,7 +255,8 @@ public class LocalBaseImageSteps {
                 .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
       }
 
-      Path configPath = resolveManifestPath(destination, loadManifest.getConfig());
+      String canonicalDestination = destination.toFile().getCanonicalPath();
+      Path configPath = resolveManifestPath(destination, canonicalDestination, loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
           JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
       // Don't compute the digest of the loaded Java JSON instance.
