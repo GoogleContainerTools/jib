@@ -47,6 +47,7 @@ import com.google.cloud.tools.jib.tar.TarExtractor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -94,6 +95,34 @@ public class LocalBaseImageSteps {
       int magic = (inputStream.read() & 0xff) | ((inputStream.read() << 8) & 0xff00);
       return magic == GZIPInputStream.GZIP_MAGIC;
     }
+  }
+
+  /**
+   * Resolves a file name declared in a base image tar's {@code manifest.json} (the {@code
+   * Config} field or an entry of the {@code Layers} array) against the tar's extraction
+   * directory, rejecting any manifest-declared name that would escape that directory.
+   *
+   * <p>{@code manifest.json} is part of the tar's own (potentially untrusted) contents, so an
+   * absolute path or a path containing {@code ..} segments must not be allowed to make Jib read
+   * an arbitrary file elsewhere on the host. This mirrors the containment check {@link
+   * com.google.cloud.tools.jib.tar.TarExtractor#extract} already applies to tar entry names.
+   *
+   * @param destination the tar's extraction directory
+   * @param manifestDeclaredName the {@code Config} or {@code Layers} file name from {@code
+   *     manifest.json}
+   * @return the resolved, verified path
+   * @throws IOException if the resolved path would escape {@code destination}
+   */
+  private static Path resolveManifestPath(Path destination, String manifestDeclaredName)
+      throws IOException {
+    Path resolved = destination.resolve(manifestDeclaredName);
+    String canonicalDestination = destination.toFile().getCanonicalPath();
+    String canonicalResolved = resolved.toFile().getCanonicalPath();
+    if (!canonicalResolved.startsWith(canonicalDestination + File.separator)) {
+      throw new IOException(
+          "Illegal file name in manifest.json, potential path traversal: " + manifestDeclaredName);
+    }
+    return resolved;
   }
 
   static Callable<LocalImage> retrieveDockerDaemonLayersStep(
@@ -225,7 +254,7 @@ public class LocalBaseImageSteps {
                 .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
       }
 
-      Path configPath = destination.resolve(loadManifest.getConfig());
+      Path configPath = resolveManifestPath(destination, loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
           JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
       // Don't compute the digest of the loaded Java JSON instance.
@@ -248,7 +277,7 @@ public class LocalBaseImageSteps {
       // Check the first layer to see if the layers are compressed already. 'docker save' output
       // is uncompressed, but a jib-built tar has compressed layers.
       boolean layersAreCompressed =
-          !layerFiles.isEmpty() && isGzipped(destination.resolve(layerFiles.get(0)));
+          !layerFiles.isEmpty() && isGzipped(resolveManifestPath(destination, layerFiles.get(0)));
 
       // Process layer blobs
       try (ProgressEventDispatcher progressEventDispatcher =
@@ -257,7 +286,7 @@ public class LocalBaseImageSteps {
         // Start compressing layers in parallel
         List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
         for (int index = 0; index < layerFiles.size(); index++) {
-          Path layerFile = destination.resolve(layerFiles.get(index));
+          Path layerFile = resolveManifestPath(destination, layerFiles.get(index));
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
           ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
               progressEventDispatcher.newChildProducer();
