@@ -455,6 +455,12 @@ public class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
+  public boolean isDisableUpdateCheck() {
+    return Boolean.parseBoolean(
+        String.valueOf(project.findProperty(PropertyNames.DISABLE_UPDATE_CHECKS)));
+  }
+
+  @Override
   public JibContainerBuilder runPluginExtensions(
       List<? extends ExtensionConfiguration> extensionConfigs,
       JibContainerBuilder jibContainerBuilder)

@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import static com.google.cloud.tools.jib.plugins.common.PropertyNames.DISABLE_UPDATE_CHECKS;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -1087,6 +1090,26 @@ public class MavenProjectPropertiesTest {
             getResource("maven/application/dependencies/another/one/dependency-1.0.0.jar"),
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
+  }
+
+  @Test
+  public void testIsDisableCheck() {
+    final MavenProject project = new MavenProject();
+    final MavenProjectProperties properties =
+        new MavenProjectProperties(
+            mockJibPluginDescriptor,
+            project,
+            mockMavenSession,
+            mockLog,
+            mockTempDirectoryProvider,
+            Collections.emptyList(),
+            mockExtensionLoader);
+
+    project.getProperties().setProperty(DISABLE_UPDATE_CHECKS, "true");
+    assertTrue(properties.isDisableUpdateCheck());
+
+    project.getProperties().setProperty(DISABLE_UPDATE_CHECKS, "false");
+    assertFalse(mavenProjectProperties.isDisableUpdateCheck());
   }
 
   private BuildContext setUpBuildContext()
