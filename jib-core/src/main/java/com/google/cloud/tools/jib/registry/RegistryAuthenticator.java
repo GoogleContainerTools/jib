@@ -224,6 +224,28 @@ public class RegistryAuthenticator {
         : serviceScope;
   }
 
+  /**
+   * Same content as {@link #getAuthRequestParameters}, but with the OAuth2 refresh token
+   * redacted. Use this (never {@link #getAuthRequestParameters}) when building human-readable
+   * text such as exception messages or log output, since those routinely end up in build/CI
+   * logs -- the real, unredacted parameters must only ever be used for the actual HTTP request
+   * body sent to the registry's token endpoint.
+   *
+   * @param credential the credential used to authenticate
+   * @param repositoryScopes the repository scopes to authenticate for
+   * @return the auth request parameters, with any refresh token redacted
+   */
+  @VisibleForTesting
+  String getRedactedAuthRequestParameters(
+      @Nullable Credential credential, Map<String, String> repositoryScopes) {
+    String serviceScope = getServiceScopeRequestParameters(repositoryScopes);
+    return isOAuth2Auth(credential)
+        ? serviceScope
+            + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
+            + "&grant_type=refresh_token&refresh_token=<redacted>"
+        : serviceScope;
+  }
+
   @VisibleForTesting
   boolean isOAuth2Auth(@Nullable Credential credential) {
     return credential != null && credential.isOAuth2RefreshToken();
@@ -292,7 +314,7 @@ public class RegistryAuthenticator {
               "Did not get token in authentication response from "
                   + getAuthenticationUrl(credential, repositoryScopes)
                   + "; parameters: "
-                  + getAuthRequestParameters(credential, repositoryScopes));
+                  + getRedactedAuthRequestParameters(credential, repositoryScopes));
         }
         return Authorization.fromBearerToken(responseJson.getToken());
       }
