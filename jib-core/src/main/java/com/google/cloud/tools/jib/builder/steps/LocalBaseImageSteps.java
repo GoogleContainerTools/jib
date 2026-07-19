@@ -288,7 +288,7 @@ public class LocalBaseImageSteps {
         // Start compressing layers in parallel
         List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
         for (int index = 0; index < layerFiles.size(); index++) {
-          Path layerFile = resolveManifestPath(destination, layerFiles.get(index));
+          Path layerFile = resolveManifestPath(destination, canonicalDestination, layerFiles.get(index));
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
           ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
               progressEventDispatcher.newChildProducer();
