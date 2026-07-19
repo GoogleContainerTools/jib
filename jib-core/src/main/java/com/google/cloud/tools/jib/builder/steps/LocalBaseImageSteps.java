@@ -113,10 +113,11 @@ public class LocalBaseImageSteps {
    * @return the resolved, verified path
    * @throws IOException if the resolved path would escape {@code destination}
    */
-  private static Path resolveManifestPath(Path destination, String manifestDeclaredName)
+  @VisibleForTesting
+  static Path resolveManifestPath(
+      Path destination, String canonicalDestination, String manifestDeclaredName)
       throws IOException {
     Path resolved = destination.resolve(manifestDeclaredName);
-    String canonicalDestination = destination.toFile().getCanonicalPath();
     String canonicalResolved = resolved.toFile().getCanonicalPath();
     if (!canonicalResolved.startsWith(canonicalDestination + File.separator)) {
       throw new IOException(
