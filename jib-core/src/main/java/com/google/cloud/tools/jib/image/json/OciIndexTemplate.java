@@ -125,6 +125,7 @@ public class OciIndexTemplate implements ManifestListTemplate {
    * href="https://github.com/opencontainers/image-spec/blob/main/image-index.md">OCI Image Index
    * Specification</a>
    */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class ManifestDescriptorTemplate
       extends BuildableManifestTemplate.ContentDescriptorTemplate {
 
