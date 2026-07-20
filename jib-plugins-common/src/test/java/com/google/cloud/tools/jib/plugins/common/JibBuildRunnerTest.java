@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -34,6 +35,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
@@ -224,6 +227,40 @@ public class JibBuildRunnerTest {
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
     }
+  }
+
+  @Test
+  public void testForBuildImage_successMessageIncludesLatestAndNoDuplicateUntaggedEntry()
+      throws Exception {
+    ImageReference targetImageReference = ImageReference.parse("repo/container");
+    Set<String> additionalTags = ImmutableSet.of("latest", "1.0.0-SNAPSHOT", "branch");
+    List<LogEvent> loggedEvents = new ArrayList<>();
+    JibBuildRunner runner =
+        JibBuildRunner.forBuildImage(
+            mockJibContainerBuilder,
+            mockContainerizer,
+            loggedEvents::add,
+            TEST_HELPFUL_SUGGESTIONS,
+            targetImageReference,
+            additionalTags);
+
+    Mockito.when(mockJibContainerBuilder.containerize(mockContainerizer))
+        .thenReturn(mockJibContainer);
+
+    runner.runBuild();
+
+    String successMessage =
+        loggedEvents.stream()
+            .map(LogEvent::getMessage)
+            .filter(message -> message.contains("Built and pushed"))
+            .findFirst()
+            .orElseThrow(AssertionError::new);
+
+    Assert.assertTrue(successMessage.contains("repo/container:latest"));
+    Assert.assertTrue(successMessage.contains("repo/container:1.0.0-SNAPSHOT"));
+    Assert.assertTrue(successMessage.contains("repo/container:branch"));
+    long occurrences = successMessage.split("repo/container", -1).length - 1L;
+    Assert.assertEquals(3, occurrences);
   }
 
   @Test
