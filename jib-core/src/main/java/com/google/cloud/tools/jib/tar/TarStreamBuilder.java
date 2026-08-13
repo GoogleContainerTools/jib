@@ -37,23 +37,27 @@ public class TarStreamBuilder {
   private final LinkedHashMap<TarArchiveEntry, Blob> archiveMap = new LinkedHashMap<>();
 
   /**
-   * Writes each entry in the filesystem to the tarball archive stream.
+   * Writes each entry in the filesystem to the tarball archive stream. Does not close {@code out};
+   * the caller owns the stream and is responsible for flushing and closing it.
    *
    * @param out the stream to write to.
    * @throws IOException if building the tarball fails.
    */
   public void writeAsTarArchiveTo(OutputStream out) throws IOException {
-    try (TarArchiveOutputStream tarArchiveOutputStream =
-        new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name())) {
-      // Enables PAX extended headers to support long file names.
-      tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-      tarArchiveOutputStream.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
-      for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
-        tarArchiveOutputStream.putArchiveEntry(entry.getKey());
-        entry.getValue().writeTo(tarArchiveOutputStream);
-        tarArchiveOutputStream.closeArchiveEntry();
-      }
+    TarArchiveOutputStream tarArchiveOutputStream =
+        new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name());
+    // Enables PAX extended headers to support long file names.
+    tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+    tarArchiveOutputStream.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX);
+    for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
+      tarArchiveOutputStream.putArchiveEntry(entry.getKey());
+      entry.getValue().writeTo(tarArchiveOutputStream);
+      tarArchiveOutputStream.closeArchiveEntry();
     }
+    // Finalize the archive without closing the provided OutputStream. This method does
+    // not own "out" (callers such as Digests.computeDigest flush and close it
+    // themselves), and closing it here caused flush-after-close errors downstream (#4505).
+    tarArchiveOutputStream.finish();
   }
 
   /**

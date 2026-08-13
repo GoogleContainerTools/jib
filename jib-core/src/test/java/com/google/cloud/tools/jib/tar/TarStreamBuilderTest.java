@@ -110,6 +110,8 @@ public class TarStreamBuilderTest {
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
     OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
     testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
+    // writeAsTarArchiveTo no longer closes the stream (#4505); the test owns it and finalizes it.
+    compressorStream.close();
 
     // Rearrange the output into input for verification.
     ByteArrayInputStream byteArrayInputStream =
@@ -203,6 +205,8 @@ public class TarStreamBuilderTest {
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
     OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
     testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
+    // writeAsTarArchiveTo no longer closes the stream (#4505); the test owns it and finalizes it.
+    compressorStream.close();
 
     // Rearrange the output into input for verification.
     ByteArrayInputStream byteArrayInputStream =
@@ -255,5 +259,26 @@ public class TarStreamBuilderTest {
     Assert.assertArrayEquals(fileAContents, fileALongString);
 
     Assert.assertNull(tarArchiveInputStream.getNextEntry());
+  }
+
+  @Test
+  public void testToBlob_doesNotCloseProvidedOutputStream() throws IOException {
+    // Regression for #4505: writeAsTarArchiveTo must not close the OutputStream it is
+    // given (it does not own it); closing it caused flush-after-close errors downstream.
+    testTarStreamBuilder.addByteEntry(
+        "foo".getBytes(StandardCharsets.UTF_8), "foo", Instant.ofEpochSecond(0));
+    boolean[] closed = {false};
+    OutputStream outStream =
+        new OutputStream() {
+          @Override
+          public void write(int b) {}
+
+          @Override
+          public void close() {
+            closed[0] = true;
+          }
+        };
+    testTarStreamBuilder.writeAsTarArchiveTo(outStream);
+    assertThat(closed[0]).isFalse();
   }
 }
