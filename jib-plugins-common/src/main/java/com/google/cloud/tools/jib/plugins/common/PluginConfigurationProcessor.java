@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.CredHelperConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.ExtraDirectoriesConfiguration;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration.PlatformConfiguration;
@@ -50,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimaps;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,6 +96,13 @@ public class PluginConfigurationProcessor {
   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
   private static final Path DEFAULT_JIB_DIR = Paths.get("src").resolve("main").resolve("jib");
+
+  /**
+   * Number of hexadecimal characters of the content hash appended to disambiguate dependency JARs
+   * that share a filename. Must be kept in sync with {@code JavaContainerBuilder}. See {@link
+   * #computeContentHash(Path)}.
+   */
+  private static final int DUPLICATE_JAR_HASH_LENGTH = 12;
 
   private PluginConfigurationProcessor() {}
 
@@ -659,12 +668,12 @@ public class PluginConfigurationProcessor {
               .collect(Collectors.toList());
 
       for (Path jar : jars) {
-        // Handle duplicates by appending filesize to the end of the file. This renaming logic
-        // must be in sync with the code that does the same in the other place. See
+        // Handle duplicates by appending a short content hash to the end of the file. This renaming
+        // logic must be in sync with the code that does the same in the other place. See
         // https://github.com/GoogleContainerTools/jib/issues/3331
         String jarName = jar.getFileName().toString();
         if (duplicates.contains(jarName)) {
-          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(jar)) + ".jar";
+          jarName = jarName.replaceFirst("\\.jar$", "-" + computeContentHash(jar)) + ".jar";
         }
         classpath.add(appRoot.resolve("libs").resolve(jarName).toString());
       }
@@ -1127,5 +1136,27 @@ public class PluginConfigurationProcessor {
    */
   private static boolean isKnownJava25Image(String imageReference) {
     return imageReference.startsWith("eclipse-temurin:25");
+  }
+
+  /**
+   * Computes a short, deterministic hash of a file's contents, used to disambiguate dependency JARs
+   * that share a filename. A content hash is used rather than the file size so that distinct JARs
+   * never collide, even if they happen to have the same size. The (SHA-256) digest is truncated
+   * because the full hash is unnecessarily long for a filename suffix and a short prefix is more
+   * than enough to tell apart the handful of same-named JARs in a single build. This must stay in
+   * sync with the equivalent logic in {@code JavaContainerBuilder}.
+   *
+   * @param file the file to hash
+   * @return the first {@value #DUPLICATE_JAR_HASH_LENGTH} hexadecimal characters of the file's
+   *     SHA-256 content digest
+   * @throws IOException if reading the file fails
+   */
+  private static String computeContentHash(Path file) throws IOException {
+    try (InputStream inputStream = Files.newInputStream(file)) {
+      return Digests.computeDigest(inputStream)
+          .getDigest()
+          .getHash()
+          .substring(0, DUPLICATE_JAR_HASH_LENGTH);
+    }
   }
 }

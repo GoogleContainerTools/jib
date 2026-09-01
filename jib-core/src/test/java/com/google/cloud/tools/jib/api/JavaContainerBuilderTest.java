@@ -94,8 +94,8 @@ public class JavaContainerBuilderTest {
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-770.jar"),
-            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-200.jar"));
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-6f67b9a71e4e.jar"),
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-cfdfca50d5aa.jar"));
     Assert.assertEquals(expectedDependencies, getExtractionPaths(buildContext, "dependencies"));
 
     // Check snapshots

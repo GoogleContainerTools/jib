@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- fix: disambiguate duplicate dependency JARs by a content hash instead of the file size, so distinct JARs that share a filename no longer collide when they happen to have the same size ([#3331](https://github.com/GoogleContainerTools/jib/issues/3331))
 
 ## 3.5.2
 
