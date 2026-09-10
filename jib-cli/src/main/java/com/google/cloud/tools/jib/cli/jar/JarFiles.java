@@ -89,6 +89,12 @@ public class JarFiles {
     if (processor.getJavaVersion() <= 11) {
       return "eclipse-temurin:11-jre";
     }
-    return "eclipse-temurin:17-jre";
+    if (processor.getJavaVersion() <= 17) {
+      return "eclipse-temurin:17-jre";
+    }
+    if (processor.getJavaVersion() <= 21) {
+      return "eclipse-temurin:21-jre";
+    }
+    return "eclipse-temurin:25-jre";
   }
 }

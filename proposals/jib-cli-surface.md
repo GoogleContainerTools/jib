@@ -21,7 +21,7 @@ build        build a container
                           registry://gcr.io/project/image
                           docker://some-image-ref
                           tar://relative/path.tar
-                          tar:///aboslute/path.tar
+                          tar:///absolute/path.tar
 ```
 
 ### Optional
@@ -49,7 +49,7 @@ build        build a container
 Credentials can be specified using credential helpers or username + password. The following options are available
 ```
     --credential-helper <credHelper>       credential helper to use for registries, a path or name suffix (docker-credential-<suffix>)
-    --to-crendential-helper <credHelper>   credential helper to use only for the target registry
+    --to-credential-helper <credHelper>    credential helper to use only for the target registry
     --from-credential-helper <credHelper>  credential helper to use only for the base image registry
 
     --username <username>                  configure a username for authenticating against registries

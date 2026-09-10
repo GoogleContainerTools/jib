@@ -37,7 +37,10 @@ public class BlobCheckerIntegrationTest {
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/base", httpClient)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
+        registryClient
+            .pullManifest(
+                ManifestPullerIntegrationTest.KNOWN_MANIFEST_V22_SHA, V22ManifestTemplate.class)
+            .getManifest();
     DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
     Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());

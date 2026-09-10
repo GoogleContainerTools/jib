@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.api.HttpRequestTester;
 import java.io.IOException;
 import java.net.URL;
 import java.security.DigestException;
 import javax.annotation.Nullable;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -33,9 +33,6 @@ public class WarProjectIntegrationTest {
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
   @Nullable private String containerName;
-
-  private final String dockerHost =
-      System.getenv("DOCKER_IP") != null ? System.getenv("DOCKER_IP") : "localhost";
 
   @After
   public void tearDown() throws IOException, InterruptedException {
@@ -63,7 +60,8 @@ public class WarProjectIntegrationTest {
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
 
-    Assert.assertEquals(
-        "Hello world", JibRunHelper.getContent(new URL("http://" + dockerHost + ":8080/hello")));
+    HttpRequestTester.verifyBody(
+        "Hello world",
+        new URL("http://" + HttpRequestTester.fetchDockerHostForHttpRequest() + ":8080/hello"));
   }
 }

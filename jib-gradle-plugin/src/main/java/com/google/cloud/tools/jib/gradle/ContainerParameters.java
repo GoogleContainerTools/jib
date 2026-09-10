@@ -26,8 +26,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -37,12 +39,12 @@ import org.gradle.api.tasks.Optional;
  */
 public class ContainerParameters {
 
-  private List<String> jvmFlags = Collections.emptyList();
+  private final ListProperty<String> jvmFlags;
   private Map<String, String> environment = Collections.emptyMap();
-  @Nullable private List<String> entrypoint;
+  private ListProperty<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
   private boolean expandClasspathDependencies;
-  @Nullable private String mainClass;
+  private final Property<String> mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
@@ -59,6 +61,9 @@ public class ContainerParameters {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
     filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
     creationTime = objectFactory.property(String.class).convention("EPOCH");
+    mainClass = objectFactory.property(String.class);
+    jvmFlags = objectFactory.listProperty(String.class);
+    entrypoint = objectFactory.listProperty(String.class);
   }
 
   @Input
@@ -69,29 +74,37 @@ public class ContainerParameters {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
     }
-    return entrypoint;
+    return entrypoint.getOrNull();
   }
 
   public void setEntrypoint(List<String> entrypoint) {
-    this.entrypoint = entrypoint;
+    this.entrypoint.set(entrypoint);
+  }
+
+  public void setEntrypoint(Provider<List<String>> entrypoint) {
+    this.entrypoint.set(entrypoint);
   }
 
   public void setEntrypoint(String entrypoint) {
-    this.entrypoint = Collections.singletonList(entrypoint);
+    this.entrypoint.set(Collections.singletonList(entrypoint));
   }
 
   @Input
   @Optional
   public List<String> getJvmFlags() {
-    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
+    String jvmFlagsSystemProperty = System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS);
+    if (jvmFlagsSystemProperty != null) {
+      return ConfigurationPropertyValidator.parseListProperty(jvmFlagsSystemProperty);
     }
-    return jvmFlags;
+    return jvmFlags.getOrElse(Collections.emptyList());
   }
 
   public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
+    this.jvmFlags.set(jvmFlags);
+  }
+
+  public void setJvmFlags(Provider<List<String>> jvmFlags) {
+    this.jvmFlags.set(jvmFlags);
   }
 
   @Input
@@ -138,14 +151,19 @@ public class ContainerParameters {
   @Nullable
   @Optional
   public String getMainClass() {
-    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+    String mainClassProperty = System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+    if (mainClassProperty != null) {
+      return mainClassProperty;
     }
-    return mainClass;
+    return mainClass.getOrNull();
   }
 
   public void setMainClass(String mainClass) {
-    this.mainClass = mainClass;
+    this.mainClass.set(mainClass);
+  }
+
+  public void setMainClass(Provider<String> mainClass) {
+    this.mainClass.set(mainClass);
   }
 
   @Input

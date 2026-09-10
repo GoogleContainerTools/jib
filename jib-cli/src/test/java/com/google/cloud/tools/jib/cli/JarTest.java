@@ -434,7 +434,7 @@ public class JarTest {
                     new Jar(), ArrayUtils.addAll(authArgs, "--target=ignored", "my-app.jar")));
     assertThat(meae)
         .hasMessageThat()
-        .containsMatch("^Error: (--(from-|to-)?credential-helper|\\[--username)");
+        .containsMatch("^Error: (\\[)*(--(from-|to-)?credential-helper|\\[--(username|password))");
   }
 
   @Test

@@ -105,7 +105,7 @@ public class ImageTarballTest {
     try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
 
       // Verifies layer with fileA was added.
-      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals(fakeDigestA.getHash() + ".tar.gz", headerFileALayer.getName());
       String fileAString =
           CharStreams.toString(
@@ -113,7 +113,7 @@ public class ImageTarballTest {
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileA)), fileAString);
 
       // Verifies layer with fileB was added.
-      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals(fakeDigestB.getHash() + ".tar.gz", headerFileBLayer.getName());
       String fileBString =
           CharStreams.toString(
@@ -121,7 +121,7 @@ public class ImageTarballTest {
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileB)), fileBString);
 
       // Verifies container configuration was added.
-      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("config.json", headerContainerConfiguration.getName());
       String containerConfigJson =
           CharStreams.toString(
@@ -129,7 +129,7 @@ public class ImageTarballTest {
       JsonTemplateMapper.readJson(containerConfigJson, ContainerConfigurationTemplate.class);
 
       // Verifies manifest was added.
-      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("manifest.json", headerManifest.getName());
       String manifestJson =
           CharStreams.toString(
@@ -159,7 +159,7 @@ public class ImageTarballTest {
     try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
 
       // Verifies layer with fileA was added.
-      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("blobs/sha256/" + fakeDigestA.getHash(), headerFileALayer.getName());
       String fileAString =
           CharStreams.toString(
@@ -167,7 +167,7 @@ public class ImageTarballTest {
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileA)), fileAString);
 
       // Verifies layer with fileB was added.
-      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("blobs/sha256/" + fakeDigestB.getHash(), headerFileBLayer.getName());
       String fileBString =
           CharStreams.toString(
@@ -175,21 +175,21 @@ public class ImageTarballTest {
       Assert.assertEquals(Blobs.writeToString(Blobs.from(fileB)), fileBString);
 
       // Verifies container configuration was added.
-      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals(
           "blobs/sha256/011212cff4d5d6b18c7d3a00a7a2701514a1fdd3ec0d250a03756f84f3d955d4",
           headerContainerConfiguration.getName());
       JsonTemplateMapper.readJson(tarArchiveInputStream, ContainerConfigurationTemplate.class);
 
       // Verifies manifest was added.
-      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals(
           "blobs/sha256/1543d061159a8d6877087938bfd62681cdeff873e1fa3e1fcf12dec358c112a4",
           headerManifest.getName());
       JsonTemplateMapper.readJson(tarArchiveInputStream, OciManifestTemplate.class);
 
       // Verifies oci-layout was added.
-      TarArchiveEntry headerOciLayout = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerOciLayout = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("oci-layout", headerOciLayout.getName());
       String ociLayoutJson =
           CharStreams.toString(
@@ -197,7 +197,7 @@ public class ImageTarballTest {
       Assert.assertEquals("{\"imageLayoutVersion\": \"1.0.0\"}", ociLayoutJson);
 
       // Verifies index.json was added.
-      TarArchiveEntry headerIndex = tarArchiveInputStream.getNextTarEntry();
+      TarArchiveEntry headerIndex = tarArchiveInputStream.getNextEntry();
       Assert.assertEquals("index.json", headerIndex.getName());
       OciIndexTemplate index =
           JsonTemplateMapper.readJson(tarArchiveInputStream, OciIndexTemplate.class);

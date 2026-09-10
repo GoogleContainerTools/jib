@@ -53,7 +53,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '3.3.1'
+  id 'com.google.cloud.tools.jib' version '3.5.4'
 }
 ```
 
@@ -109,7 +109,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 jib.to.image = 'my-docker-id/my-app'
 ```
 
-#### Using [JFrog Container Registry (JCR)](https://www.jfrog.com/confluence/display/JFROG/JFrog+Container+Registry/) or [JFrog Artifactory](https://www.jfrog.com/confluence/display/JFROG/Getting+Started+with+Artifactory+as+a+Docker+Registry)...
+#### Using [JFrog Container Registry (JCR)](https://jfrog.com/container-registry) or [JFrog Artifactory](https://jfrog.com/help/r/jfrog-artifactory-documentation/getting-started-with-artifactory-as-a-docker-registry)...
 
 *Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
@@ -210,12 +210,12 @@ Field | Type | Default | Description
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
-Property | Type | Default | Description
---- | --- | --- | ---
-`image` | `String` | `eclipse-temurin:{8,11,17}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
-`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | Configures platforms of base images to select from a manifest list.
+Property | Type | Default                                                    | Description
+--- | --- |------------------------------------------------------------| ---
+`image` | `String` | `eclipse-temurin:{8,11,17,21,25}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`auth` | [`auth`](#auth-closure) | *None*                                                     | Specifies credentials directly (alternative to `credHelper`).
+`credHelper` | `String` | *None*                                                     | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure)                      | Configures platforms of base images to select from a manifest list.
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -249,15 +249,15 @@ Property | Type | Default | Description
 `appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `creationTime` | `String` | `EPOCH` | Sets the container creation time. (Note that this property does not affect the file modification times, which are configured using `jib.container.filesModificationTime`.) The value can be `EPOCH` to set the timestamps to Epoch (default behavior), `USE_CURRENT_TIMESTAMP` to forgo reproducibility and use the real creation time, or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`. The value can also be initialized [lazily](https://docs.gradle.org/current/userguide/lazy_configuration.html) with a provider.
-`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags`, `mainClass`, `extraClasspath`, and `expandClasspathDependencies` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
+`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags`, `mainClass`, `extraClasspath`, and `expandClasspathDependencies` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\* The value can also be initialized [lazily](https://docs.gradle.org/current/userguide/lazy_configuration.html) with a provider.
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `extraClasspath` | `List<String>` | *None* | Additional paths in the container to prepend to the computed Java classpath.
 `expandClasspathDependencies` | `boolean` | `false` | <ul><li>Java 8 *or* Jib < 3.1: When set to true, does not use a wildcard (for example, `/app/lib/*`) for dependency JARs in the default Java runtime classpath but instead enumerates the JARs. Has the effect of preserving the classpath loading order as defined by the Gradle project.</li><li>Java >= 9 *and* Jib >= 3.1: The option has no effect. Jib *always* enumerates the dependency JARs. This is achieved by [creating and using an argument file](#custom-container-entrypoint) for the `--class-path` JVM argument.</li></ul>
 `filesModificationTime` | `String` | `EPOCH_PLUS_SECOND` | Sets the modification time (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time, which can be set using `jib.container.creationTime`.) The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date-time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_DATE_TIME) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z`. The value can also be initialized [lazily](https://docs.gradle.org/current/userguide/lazy_configuration.html) with a provider.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
-`jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
+`jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application. The value can also be initialized [lazily](https://docs.gradle.org/current/userguide/lazy_configuration.html) with a provider.
 `labels` | `Map<String, String>` | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
-`mainClass` | `String` | *Inferred*\*\* | The main class to launch your application from.
+`mainClass` | `String` | *Inferred*\*\* | The main class to launch your application from. The value can also be initialized [lazily](https://docs.gradle.org/current/userguide/lazy_configuration.html) with a provider.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `user` | `String` | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
 `volumes` | `List<String>` | *None* | Specifies a list of mount points on the container.
@@ -314,7 +314,7 @@ The following table contains additional system properties that are not available
 Property | Type | Default | Description
 --- | --- | --- | ---
 `jib.httpTimeout` | `int` | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
-`jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
+`jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Gradle projects.
 `jib.baseImageCache` | `File` | *Platform-dependent*\*\*\* | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
 `jib.applicationCache` | `File` | `[project dir]/build/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
@@ -339,7 +339,7 @@ Some options can be set in the global Jib configuration file. The file is at the
 #### Properties
 
 * `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
-* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfully pull a base image.
 
 ```json
 {

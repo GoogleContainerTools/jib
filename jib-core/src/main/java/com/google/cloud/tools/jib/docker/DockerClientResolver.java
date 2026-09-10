@@ -23,9 +23,6 @@ import java.util.ServiceLoader;
 
 public class DockerClientResolver {
 
-  private static final ServiceLoader<DockerClient> dockerClients =
-      ServiceLoader.load(DockerClient.class);
-
   private DockerClientResolver() {}
 
   /**
@@ -35,6 +32,7 @@ public class DockerClientResolver {
    * @return dockerClient if any is found
    */
   public static Optional<DockerClient> resolve(Map<String, String> parameters) {
+    ServiceLoader<DockerClient> dockerClients = ServiceLoader.load(DockerClient.class);
     for (DockerClient dockerClient : dockerClients) {
       if (dockerClient.supported(parameters)) {
         return Optional.of(dockerClient);

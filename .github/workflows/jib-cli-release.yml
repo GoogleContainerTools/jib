@@ -7,6 +7,10 @@ on:
         required: true
         default: (for example, 0.1.0)
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   release:
     name: Release Jib CLI
@@ -16,36 +20,48 @@ jobs:
       upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
 
       - name: Build project
         run: |
-          if [[ ! "${{ github.event.inputs.release_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'version "${{ github.event.inputs.release_version }}" not in ###.###.### format'
+          if [[ ! "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'version "${GITHUB_EVENT_INPUTS_RELEASE_VERSION}" not in ###.###.### format'
             exit 1
           fi
           # TODO: run integration test? (Requries auth with GCP.)
           ./gradlew clean build --stacktrace
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Run Gradle release
         run: |
-          git checkout -b cli-release-v${{ github.event.inputs.release_version }}
-          git config user.email ${{ github.actor }}@users.noreply.github.com
-          git config user.name ${{ github.actor }}
+          git checkout -b cli-release-v${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+          git config user.email ${GITHUB_ACTOR}@users.noreply.github.com
+          git config user.name ${GITHUB_ACTOR}
           # This creates the tag (e.g., "v0.1.0-cli") and pushes the updated
           # branch (e.g., "cli-release-v0.1.0") and the new tag.
           ./gradlew jib-cli:release \
             -Prelease.useAutomaticVersion=true \
-            -Prelease.releaseVersion=${{ github.event.inputs.release_version }}
+            -Prelease.releaseVersion=${GITHUB_EVENT_INPUTS_RELEASE_VERSION}
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Build Jib CLI release binaries
         run: |
-          git checkout v${{ github.event.inputs.release_version }}-cli
+          git checkout v${GITHUB_EVENT_INPUTS_RELEASE_VERSION}-cli
           ./gradlew jib-cli:instDist --stacktrace
 
           cd jib-cli/build/distributions
-          mv jib-${{ github.event.inputs.release_version }}.zip jib-jre-${{ github.event.inputs.release_version }}.zip
-          sha256sum jib-jre-${{ github.event.inputs.release_version }}.zip > zip.sha256
+          mv jib-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip jib-jre-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip
+          sha256sum jib-jre-${GITHUB_EVENT_INPUTS_RELEASE_VERSION}.zip > zip.sha256
+        env:
+          GITHUB_EVENT_INPUTS_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
 
       - name: Generate SLSA subject for Jib CLI release binaries
         id: hash
@@ -56,9 +72,7 @@ jobs:
         uses: repo-sync/pull-request@v2.12.1
         id: create-pr
         with:
-          # Use a personal token to file a PR as a non-bot author to trigger other workflows (e.g., unit tests):
-          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token;
-          github_token: ${{ secrets.GA_RELEASE_PR_PERSONAL_TOKEN }}
+          github_token: ${{ secrets.CLOUD_JAVA_BOT_GITHUB_TOKEN }}
           source_branch: cli-release-v${{ github.event.inputs.release_version }}
           pr_title: "CLI release v${{ github.event.inputs.release_version }}"
           pr_body: "To be merged after the release is complete."
@@ -99,7 +113,7 @@ jobs:
           asset_content_type: text/plain
 
       - name: Create Jib CLI release checklist issue
-        uses: JasonEtco/create-an-issue@v2.9.1
+        uses: JasonEtco/create-an-issue@v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_NAME: v${{ github.event.inputs.release_version }}-cli
@@ -117,7 +131,7 @@ jobs:
       actions: read # To read the workflow path.
       id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.5.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
 

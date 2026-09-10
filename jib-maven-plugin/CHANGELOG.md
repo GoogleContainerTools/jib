@@ -9,6 +9,85 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 3.5.2
+
+### Changed
+- deps: Update Jackson BOM version to 2.21.1 (#4495)
+
+### Fixed
+- fix: ignore unknown "artifactType" field in manifest descriptors (#4509)
+
+## 3.5.1
+
+### Added
+- feat: support Java 25 main methods
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.9
+
+## 3.5.0
+
+### Added
+- feat: add default base image for Java 25 (#4436)
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.8 for java 25 support
+
+### Fixed
+
+## 3.4.6
+
+### Changed
+- Update retrieval of Maven properties to use the following order: user, project, system [#4344](https://github.com/GoogleContainerTools/jib/issues/4344)
+
+## 3.4.5
+
+### Fixed
+- fix: address windows deadlock issue when determining docker environment info [#4267](https://github.com/GoogleContainerTools/jib/issues/4267)
+
+
+## 3.4.4
+- fix: allow pushing images with different arch/os to docker daemon [#4265](https://github.com/GoogleContainerTools/jib/issues/4265)
+- fix: address windows deadlock issue when determining docker environment info [#4267](https://github.com/GoogleContainerTools/jib/issues/4265)
+
+## 3.4.3
+
+### Fixed
+- fix: When building to the local docker daemon with multiple platforms configured, Jib will now automatically select the image that matches the OS type and architecture of the local Docker environment. ([#4249](https://github.com/GoogleContainerTools/jib/pull/4249))
+
+## 3.4.2
+
+### Changed
+- deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+### Fixed
+- fix: set PAX headers to address build reproducibility issue ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+- fix: (WAR Containerization) modify default entrypoint to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy` for Jetty 12+ compatibility ([#4216](https://github.com/GoogleContainerTools/jib/pull/4216))
+
+## 3.4.1
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
+
+## 3.4.0
+
+### Changed
+- deps: bump org.apache.maven:maven-compat from 3.9.1 to 3.9.2. ([#4017](https://github.com/GoogleContainerTools/jib/pull/4017/))
+- deps: bump com.github.luben:zstd-jni from 1.5.5-2 to 1.5.5-4. ([#4049](https://github.com/GoogleContainerTools/jib/pull/4049/))
+- deps: bump com.fasterxml.jackson:jackson-bom from 2.15.0 to 2.15.2. ([#4055](https://github.com/GoogleContainerTools/jib/pull/4055))
+- deps: bump com.google.guava:guava from 32.0.1-jre to 32.1.2-jre ([#4078](https://github.com/GoogleContainerTools/jib/pull/4078))
+- deps: bump org.slf4j:slf4j-simple from 2.0.7 to 2.0.9. ([#4098](https://github.com/GoogleContainerTools/jib/pull/4098))
+
+### Fixed
+- fix: fix WWW-Authenticate header parsing for Basic authentication ([#4035](https://github.com/GoogleContainerTools/jib/pull/4035/))
+
+## 3.3.2
+
+### Changed
+- Log an info instead of warning when entrypoint makes the image to ignore jvm parameters ([#3904](https://github.com/GoogleContainerTools/jib/pull/3904))
+
+Thanks to our community contributors @rmannibucau!
+
 ## 3.3.1
 
 ### Changed
@@ -52,7 +131,6 @@ Thanks to our community contributors @wwadge, @oliver-brm, @rquinio and @gsquare
 ### Changed
 
 - Upgraded jackson-databind to 2.13.2.2 ([#3612](https://github.com/GoogleContainerTools/jib/pull/3612)).
-
 
 ## 3.2.0
 

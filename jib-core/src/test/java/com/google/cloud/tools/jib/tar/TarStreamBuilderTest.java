@@ -118,22 +118,22 @@ public class TarStreamBuilderTest {
     TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
 
     // Verify multi-byte characters are written/read correctly
-    TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry headerFile = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("test", headerFile.getName());
     Assert.assertEquals(
         "日本語", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
-    headerFile = tarArchiveInputStream.getNextTarEntry();
+    headerFile = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("crepecake", headerFile.getName());
     Assert.assertEquals(
         "asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
-    headerFile = tarArchiveInputStream.getNextTarEntry();
+    headerFile = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("jib", headerFile.getName());
     Assert.assertEquals(
         "jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
 
-    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+    Assert.assertNull(tarArchiveInputStream.getNextEntry());
   }
 
   @Test
@@ -151,8 +151,8 @@ public class TarStreamBuilderTest {
 
     TarArchiveInputStream tarInStream =
         new TarArchiveInputStream(new ByteArrayInputStream(outStream.toByteArray()));
-    TarArchiveEntry entry1 = tarInStream.getNextTarEntry();
-    TarArchiveEntry entry2 = tarInStream.getNextTarEntry();
+    TarArchiveEntry entry1 = tarInStream.getNextEntry();
+    TarArchiveEntry entry2 = tarInStream.getNextEntry();
 
     assertThat(entry1.getName()).isEqualTo("foo");
     assertThat(entry1.getModTime().toInstant()).isEqualTo(Instant.ofEpochSecond(1234));
@@ -231,29 +231,29 @@ public class TarStreamBuilderTest {
    */
   private void verifyTarArchive(TarArchiveInputStream tarArchiveInputStream) throws IOException {
     // Verifies fileA was archived correctly.
-    TarArchiveEntry headerFileA = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry headerFileA = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("some/path/to/resourceFileA", headerFileA.getName());
     byte[] fileAString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileAContents, fileAString);
 
     // Verifies fileB was archived correctly.
-    TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry headerFileB = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("crepecake", headerFileB.getName());
     byte[] fileBString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileBContents, fileBString);
 
     // Verifies directoryA was archived correctly.
-    TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals("some/path/to/", headerDirectoryA.getName());
 
     // Verifies the long file was archived correctly.
-    TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
+    TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextEntry();
     Assert.assertEquals(
         "some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
         headerFileALong.getName());
     byte[] fileALongString = ByteStreams.toByteArray(tarArchiveInputStream);
     Assert.assertArrayEquals(fileAContents, fileALongString);
 
-    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+    Assert.assertNull(tarArchiveInputStream.getNextEntry());
   }
 }

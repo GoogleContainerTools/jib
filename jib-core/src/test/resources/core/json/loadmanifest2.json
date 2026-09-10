@@ -1,0 +1,1 @@
+[{"Config":"config.json","RepoTags":["testregistry/testrepo:testtag"],"Layers":["layer1.tar.gz","layer2.tar.gz","layer3.tar.gz"],"LayerSources":{}}]

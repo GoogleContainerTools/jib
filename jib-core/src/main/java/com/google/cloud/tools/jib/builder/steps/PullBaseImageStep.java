@@ -47,7 +47,6 @@ import com.google.cloud.tools.jib.image.json.PlatformNotFoundInBaseImageExceptio
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.UnlistedPlatformInManifestListException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -468,7 +467,7 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
     ImmutableList.Builder<Image> images = ImmutableList.builder();
     for (Platform platform : buildContext.getContainerConfiguration().getPlatforms()) {
       String manifestDigest =
-          lookUpPlatformSpecificImageManifest((V22ManifestListTemplate) manifestList, platform);
+          lookUpPlatformSpecificImageManifest((ManifestListTemplate) manifestList, platform);
 
       Optional<ManifestAndConfigTemplate> manifestAndConfigFound =
           manifestsAndConfigs.stream()

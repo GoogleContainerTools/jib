@@ -16,8 +16,12 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.DockerInfoDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.docker.CliDockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.image.ImageTarball;
@@ -81,6 +85,85 @@ public class CliDockerClientTest {
     Assert.assertTrue(
         CliDockerClient.isDockerInstalled(
             Paths.get(Resources.getResource("core/docker/emptyFile").toURI())));
+  }
+
+  @Test
+  public void testInfo() throws InterruptedException, IOException {
+    String dockerInfoJson = "{ \"OSType\": \"windows\"," + "\"Architecture\": \"arm64\"}";
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    // Simulates stdout.
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream(dockerInfoJson.getBytes()));
+
+    DockerInfoDetails infoDetails = testDockerClient.info();
+    assertThat(infoDetails.getArchitecture()).isEqualTo("arm64");
+    assertThat(infoDetails.getOsType()).isEqualTo("windows");
+  }
+
+  @Test
+  public void testInfo_fail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
+    Mockito.when(mockProcess.waitFor()).thenReturn(1);
+    Mockito.when(mockProcess.getErrorStream())
+        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+
+    IOException exception = assertThrows(IOException.class, testDockerClient::info);
+    assertThat(exception)
+        .hasMessageThat()
+        .contains("'docker info' command failed with error: error");
+  }
+
+  @Test
+  public void testInfo_stdinFail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(
+            new InputStream() {
+
+              @Override
+              public int read() throws IOException {
+                throw new IOException();
+              }
+            });
+
+    assertThrows(IOException.class, testDockerClient::info);
+
+    Mockito.verify(mockProcess, Mockito.never()).waitFor();
+  }
+
+  @Test
+  public void testInfo_returnsUnknownKeys() throws InterruptedException, IOException {
+    String dockerInfoJson = "{ \"unknownOS\": \"windows\"," + "\"unknownArchitecture\": \"arm64\"}";
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              assertThat(subcommand).containsExactly("info", "-f", "{{json .}}");
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(0);
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream(dockerInfoJson.getBytes()));
+
+    DockerInfoDetails infoDetails = testDockerClient.info();
+    assertThat(infoDetails.getArchitecture()).isEmpty();
+    assertThat(infoDetails.getOsType()).isEmpty();
   }
 
   @Test
@@ -253,6 +336,8 @@ public class CliDockerClientTest {
               Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
             });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)));
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
@@ -265,6 +350,30 @@ public class CliDockerClientTest {
     } catch (IOException ex) {
       Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testSize_stdinFail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new CliDockerClient(
+            subcommand -> {
+              Assert.assertEquals("inspect", subcommand.get(0));
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(
+            new InputStream() {
+
+              @Override
+              public int read() throws IOException {
+                throw new IOException();
+              }
+            });
+
+    assertThrows(
+        IOException.class, () -> testDockerClient.inspect(ImageReference.of(null, "image", null)));
+
+    Mockito.verify(mockProcess, Mockito.never()).waitFor();
   }
 
   @Test

@@ -76,6 +76,27 @@ public class OciIndexTemplateTest {
   }
 
   @Test
+  public void testFromJsonWithUnknownProperties()
+      throws IOException, URISyntaxException, DigestException {
+    // Loads a JSON index whose manifest descriptors carry an OCI 1.1 "artifactType" field, which
+    // Jib does not model. Unknown descriptor properties must be ignored rather than fail parsing.
+    // https://github.com/GoogleContainerTools/jib/issues/4506
+    Path jsonFile =
+        Paths.get(Resources.getResource("core/json/ociindex_artifacttype.json").toURI());
+
+    OciIndexTemplate ociIndexJson =
+        JsonTemplateMapper.readJsonFromFile(jsonFile, OciIndexTemplate.class);
+
+    Assert.assertEquals(2, ociIndexJson.getManifests().size());
+    Assert.assertEquals(
+        "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+        ociIndexJson.getDigestsForPlatform("amd64", "linux").get(0));
+    Assert.assertEquals(
+        "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
+        ociIndexJson.getDigestsForPlatform("arm64", "linux").get(0));
+  }
+
+  @Test
   public void testToJsonWithPlatform() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("core/json/ociindex_platforms.json").toURI());

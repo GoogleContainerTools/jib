@@ -1,7 +1,13 @@
+
+This project is currently stable, and we are primarily focused on critical bug fixes and platform evolution to ensure it continues to work for its supported use cases.
+
 # Contributing to Jib
 
-We'd love to accept your patches and contributions to this project. There are
-just a few small guidelines you need to follow.
+Please follow the guidelines below before opening an issue or a PR:
+1. Ensure the issue was not already reported. 
+2. Open a new issue if you are unable to find an existing issue addressing your problem. Make sure to include a title and clear description, as much relevant information as possible, and a code sample or an executable test case demonstrating the expected behavior that is not occurring.
+3. Discuss the priority and potential solutions with the maintainers in the issue. The maintainers would review the issue and add a label "Accepting Contributions" once the issue is ready for accepting contributions. 
+4. Open a PR only if the issue is labeled with "Accepting Contributions", ensure the PR description clearly describes the problem and solution. Note that an open PR without an issues labeled with "Accepting Contributions" will not be accepted.
 
 ## Contributor License Agreement
 
@@ -15,25 +21,20 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
-## Building Jib
-
-Jib comes as 3 public components:
-
-  - `jib-core`: a library for building containers
-  - `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
-  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
-
-And 1 internal component:
-
-  - `jib-plugins-common`: a library with helpers for maven/gradle plugins
-
-The project is configured as a single gradle build. Run `./gradlew build` to build the
-whole project. Run `./gradlew install` to install all public components into the
-local maven repository.
-
 ## Code Reviews
 
-1. Set your git user.email property to the address used for step 1. E.g.
+All submissions, including submissions by project members, require review. We
+use Github pull requests for this purpose.
+
+Before submitting a pull request, please make sure to:
+
+- Identify an existing [issue](https://github.com/GoogleContainerTools/jib/issues) to associate
+  with your proposed change, or [file a new issue](https://github.com/GoogleContainerTools/jib/issues/new).
+- Describe any implementation plans in the issue and wait for a review from the repository maintainers.
+
+### Typical Contribution Cycle
+
+1. Set your git user.email property to the address used for signing the CLA. E.g.
    ```
    git config --global user.email "janedoe@google.com"
    ```
@@ -46,6 +47,22 @@ local maven repository.
    * run `./gradlew clean goJF build integrationTest`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
+
+## Building Jib
+
+Jib comes as 3 public components:
+
+- `jib-core`: a library for building containers
+- `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
+- `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
+
+And 1 internal component:
+
+- `jib-plugins-common`: a library with helpers for maven/gradle plugins
+
+The project is configured as a single gradle build. Run `./gradlew build` to build the
+whole project. Run `./gradlew install` to install all public components into the
+local maven repository.
 
 ### Integration Tests
 **Note** that in order to run integration tests, you will need to set one of the
@@ -64,10 +81,14 @@ To run select integration tests, use `--tests=<testPattern>`, see [gradle docs](
 
 # Development Tips
 
+## Java version
+
+Use Java 8 or 11 for development. https://sdkman.io/ is a helpful tool to switch between Java versions.
+
 ## Configuring Eclipse
 
 Although jib is a mix of Gradle and Maven projects, we build everything using one
-unifed gradle build. There is special code to include some projects directly as
+unified gradle build. There is special code to include some projects directly as
 source, but importing your project should be pretty straight forward.
 
   1. Ensure you have installed the Gradle tooling for Eclipse, called

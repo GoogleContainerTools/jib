@@ -6,9 +6,84 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-- Replaced usages of `com.google.api.client.util.Base64` with `java.util.Base64` ([#3872](https://github.com/GoogleContainerTools/jib/pull/3872))
 
 ### Fixed
+
+## 0.28.2
+
+### Changed
+- deps: Update Jackson BOM version to 2.21.1 (#4495)
+
+### Fixed
+- fix: ignore unknown "artifactType" field in manifest descriptors (#4509)
+
+## 0.28.1
+
+### Added
+- feat: support Java 25 main methods
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.9
+
+## 0.28.0
+
+### Added
+- feat: add default base image for Java 25 (#4436)
+
+### Changed
+- deps: update `org.ow2.asm:asm` to version 9.8 for java 25 support
+
+## 0.27.3
+
+### Fixed
+- fix: address windows deadlock issue when determining docker environment info [#4267](https://github.com/GoogleContainerTools/jib/issues/4265)
+
+## 0.27.2
+- fix: allow pushing images with different arch/os to docker daemon [#4265](https://github.com/GoogleContainerTools/jib/issues/4265)
+- fix: address windows deadlock issue when determining docker environment info [#4267](https://github.com/GoogleContainerTools/jib/issues/4265)
+
+## 0.27.1
+
+### Fixed
+- fix: When building to the local docker daemon with multiple platforms configured, Jib will now automatically select the image that matches the OS type and architecture of the local Docker environment. ([#4249](https://github.com/GoogleContainerTools/jib/pull/4249))
+
+
+## 0.27.0
+
+### Changed
+- deps: bump org.apache.commons:commons-compress from 1.21 to 1.26.0 ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+### Fixed
+- fix: set PAX headers to address build reproducibility issue ([#4204](https://github.com/GoogleContainerTools/jib/pull/4204))
+
+## 0.26.0
+
+### Fixed
+- fix: support parsing manifest JSON containing `LayerSources:` from latest Docker. ([#4171](https://github.com/GoogleContainerTools/jib/pull/4171))
+
+## 0.25.0
+
+### Changed
+- deps: bump com.github.luben:zstd-jni from 1.5.5-2 to 1.5.5-4. ([#4049](https://github.com/GoogleContainerTools/jib/pull/4049/))
+- deps: bump com.fasterxml.jackson:jackson-bom from 2.15.0 to 2.15.2. ([#4055](https://github.com/GoogleContainerTools/jib/pull/4055))
+- deps: bump com.google.guava:guava from 32.0.1-jre to 32.1.2-jre ([#4078](https://github.com/GoogleContainerTools/jib/pull/4078))
+- deps: bump org.slf4j:slf4j-simple from 2.0.7 to 2.0.9. ([#4098](https://github.com/GoogleContainerTools/jib/pull/4098))
+
+### Fixed
+- fix: fix WWW-Authenticate header parsing for Basic authentication ([#4035](https://github.com/GoogleContainerTools/jib/pull/4035/))
+
+## 0.24.0
+
+### Changed
+- Replaced deprecated usages of `com.google.api.client.util.Base64` with `java.util.Base64` ([#3872](https://github.com/GoogleContainerTools/jib/pull/3872))
+- Replaced deprecated usages of `ObjectMapper.configure` in jackson ([#3890](https://github.com/GoogleContainerTools/jib/pull/3890))
+
+### Fixed
+- Fixed `V22ManifestListTemplate` cast to allow pulling an OCI index manifest from cache ([#3974](https://github.com/GoogleContainerTools/jib/pull/3974))
+- Specified `CompressorStreamFactory` to decompress compressed layer until EOF in `CacheStorageWriter` ([#3983](https://github.com/GoogleContainerTools/jib/pull/3983))
+- Fixed multithreading issue from `DockerClientResolver.resolve` by not sharing a static `ServiceLoader` instance ([#3993](https://github.com/GoogleContainerTools/jib/pull/3993))
+
+Thanks to our community contributors @Sineaggi, @rquinio, @patrickpichler, @erdi!
 
 ## 0.23.0
 

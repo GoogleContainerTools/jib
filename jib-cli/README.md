@@ -28,6 +28,7 @@ The CLI tool is powered by [Jib Core](https://github.com/GoogleContainerTools/ji
   * [Download a Java Application](#download-a-java-application)
   * [Windows: Install with `choco`](#windows-install-with-choco)
   * [Build Yourself from Source (for Advanced Users)](#build-yourself-from-source-for-advanced-users)
+* [Jib CLI JVM options](#jib-cli-jvm-options)
 * [Supported Commands](#supported-commands)
 * [Build Command](#build-command)
   * [Quickstart](#quickstart)
@@ -56,7 +57,7 @@ Most users should download a ZIP archive (Java application). We are working on r
 
 A JRE is required to run this Jib CLI distribution.
 
-Find the [latest jib-cli 0.12.0 release](https://github.com/GoogleContainerTools/jib/releases/latest) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases) and download `jib-jre-<version>.zip`.
+Find the [latest jib-cli 0.13.0 release](https://github.com/GoogleContainerTools/jib/releases/latest) on the [Releases page](https://github.com/GoogleContainerTools/jib/releases) and download `jib-jre-<version>.zip`.
 
 Unzip the zip file. The zip file contains the `jib` (`jib.bat` for Windows) script at `jib/bin/`. Optionally, add the binary directory to your `$PATH` so that you can call `jib` from anywhere.
 
@@ -70,7 +71,7 @@ slsa-verifier -artifact-path jib-jre-<version>.zip -provenance jib-jre-<version>
 
 ### Windows: Install with `choco`
 
-On Windows, you can use the [`choco`](https://community.chocolatey.org/packages/jib) command. To install, upgradle, or uninstall Jib CLI, run the following commands from the command-line or PowerShell:
+On Windows, you can use the [`choco`](https://community.chocolatey.org/packages/jib) command. To install, upgrade, or uninstall Jib CLI, run the following commands from the command-line or PowerShell:
 ```
 choco install jib
 choco upgrade jib
@@ -87,6 +88,12 @@ $ ./gradlew jib-cli:installDist
 # run
 $ ./jib-cli/build/install/jib/bin/jib
 ```
+
+## Jib CLI JVM options
+
+Jib CLI is a Java application built with the [Gradle application plugin](https://docs.gradle.org/current/userguide/application_plugin.html). 
+To configure JVM options for the Jib CLI process itself, you can use the `JIB_OPTS` or `JAVA_OPTS` environment variables.
+This is commonly used to configure settings like a proxy by passing standard Java networking properties, as described in the [proxy configuration FAQ](../docs/faq.md#how-do-i-configure-a-proxy).
 
 ## Supported Commands
 
@@ -190,7 +197,7 @@ This command follows the following pattern:
 
 ## Quickstart
 
-1. Have your sample WAR ready and use the `war` command to containerize your WAR. By default, the WAR command uses [`jetty`](https://hub.docker.com/_/jetty) as the base image so the entrypoint is set to `java -jar /usr/local/jetty/start.jar`:
+1. Have your sample WAR ready and use the `war` command to containerize your WAR. By default, the WAR command uses [`jetty`](https://hub.docker.com/_/jetty) as the base image so the entrypoint is set to `java -jar /usr/local/jetty/start.jar --module=ee10-deploy`:
     ```
      $ jib war --target=docker://cli-war-quickstart <your-sample>.war
     ```
@@ -242,7 +249,7 @@ Credentials can be specified using credential helpers or username + password. Th
 
 ```
     --credential-helper <credHelper>      credential helper for communicating with both target and base image registries, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
-    --to-crendential-helper <credHelper>  credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
+    --to-credential-helper <credHelper>   credential helper for communicating with target registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>
     --from-credential-helper <credHelper> credential helper for communicating with base image registry, either a path to the helper, or a suffix for an executable named `docker-credential-<suffix>`
 
     --username <username>                  username for communicating with both target and base image registries
@@ -298,7 +305,7 @@ Some options can be set in the global Jib configuration file. The file is at the
 ### Properties 
 
 * `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
-* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfully pull a base image.
 
 ```json
 {
@@ -428,7 +435,7 @@ layers:
       - src: file.txt
         dest: /file.txt
      ```
-- Parent directories that are not exiplicitly defined in a layer will the default properties in jib-core (permissions: 755, modification-time: epoch+1). In the following example, `/somewhere` on the container will have the directory permissions `755`, not `777` as some might expect.
+- Parent directories that are not explicitly defined in a layer will the default properties in jib-core (permissions: 755, modification-time: epoch+1). In the following example, `/somewhere` on the container will have the directory permissions `755`, not `777` as some might expect.
     ```
     - name: layer
       properties:
@@ -445,7 +452,7 @@ layers:
      
 #### Base Image Parameter Inheritance
 
-Some values defined in the base image may be preserved and propogated into the new container.
+Some values defined in the base image may be preserved and propagated into the new container.
 
 Parameters will append to base image value:
 - `volumes`

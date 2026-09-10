@@ -114,6 +114,7 @@ public class V22ManifestListTemplate implements ManifestListTemplate {
   }
 
   /** Template for inner JSON object representing a single platform specific manifest. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class ManifestDescriptorTemplate implements JsonTemplate {
 
     @JsonIgnoreProperties(ignoreUnknown = true)

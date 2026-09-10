@@ -18,12 +18,15 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.DockerInfoDetails;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImagesAndRegistryClient;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.Image;
@@ -413,7 +416,8 @@ public class StepsRunner {
             BuildAndCacheApplicationLayerStep.makeList(buildContext, progressDispatcherFactory));
   }
 
-  private void buildImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
+  @VisibleForTesting
+  void buildImages(ProgressEventDispatcher.Factory progressDispatcherFactory) {
     results.baseImagesAndBuiltImages =
         executorService.submit(
             () -> {
@@ -616,11 +620,12 @@ public class StepsRunner {
     results.buildResult =
         executorService.submit(
             () -> {
-              Verify.verify(
-                  results.baseImagesAndBuiltImages.get().size() == 1,
-                  "multi-platform image building not supported when pushing to Docker engine");
+              DockerInfoDetails dockerInfoDetails = dockerClient.info();
+              String osType = dockerInfoDetails.getOsType();
+              String architecture = normalizeArchitecture(dockerInfoDetails.getArchitecture());
               Image builtImage =
-                  results.baseImagesAndBuiltImages.get().values().iterator().next().get();
+                  fetchBuiltImageForLocalBuild(
+                      osType, architecture, buildContext.getEventHandlers());
               return new LoadDockerStep(
                       buildContext, progressDispatcherFactory, dockerClient, builtImage)
                   .call();
@@ -646,5 +651,38 @@ public class StepsRunner {
 
   private <E> List<Future<E>> scheduleCallables(ImmutableList<? extends Callable<E>> callables) {
     return callables.stream().map(executorService::submit).collect(Collectors.toList());
+  }
+
+  @VisibleForTesting
+  String normalizeArchitecture(String architecture) {
+    // Create mapping based on https://docs.docker.com/engine/install/#supported-platforms
+    if (architecture.equals("x86_64")) {
+      return "amd64";
+    } else if (architecture.equals("aarch64")) {
+      return "arm64";
+    }
+    return architecture;
+  }
+
+  @VisibleForTesting
+  Image fetchBuiltImageForLocalBuild(
+      String osType, String architecture, EventHandlers eventHandlers)
+      throws InterruptedException, ExecutionException {
+    if (results.baseImagesAndBuiltImages.get().size() > 1) {
+      eventHandlers.dispatch(
+          LogEvent.warn(
+              String.format(
+                  "Detected multi-platform configuration, only building image that matches the local Docker Engine's os and architecture (%s/%s) or "
+                      + "the first platform specified",
+                  osType, architecture)));
+      for (Map.Entry<Image, Future<Image>> imageEntry :
+          results.baseImagesAndBuiltImages.get().entrySet()) {
+        Image image = imageEntry.getValue().get();
+        if (image.getArchitecture().equals(architecture) && image.getOs().equals(osType)) {
+          return image;
+        }
+      }
+    }
+    return results.baseImagesAndBuiltImages.get().values().iterator().next().get();
   }
 }

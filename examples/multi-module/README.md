@@ -27,7 +27,7 @@ in gradle to achieve this. This configuration can be seen in the
 
 Care must be taken when adding custom attributes to a `MANIFEST.MF`.
 Attributes whose values change on every build can affect reproducibility even
-with the modifications outlined aboved.
+with the modifications outlined above.
 
 # How to run
 

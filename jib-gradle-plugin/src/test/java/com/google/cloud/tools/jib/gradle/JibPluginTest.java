@@ -369,6 +369,12 @@ public class JibPluginTest {
   }
 
   @Test
+  public void testLazyEvalForEntryPoint() {
+    BuildResult showEntrypoint = testProject.build("showentrypoint", "-Djib.console=plain");
+    assertThat(showEntrypoint.getOutput()).contains("entrypoint contains updated");
+  }
+
+  @Test
   public void testLazyEvalForExtraDirectories() {
     BuildResult checkExtraDirectories =
         testProject.build("check-extra-directories", "-Djib.console=plain");
@@ -405,6 +411,18 @@ public class JibPluginTest {
     String output = showTimes.getOutput();
     assertThat(output).contains("creationTime=2022-07-19T10:23:42Z");
     assertThat(output).contains("filesModificationTime=2022-07-19T11:23:42Z");
+  }
+
+  @Test
+  public void testLazyEvalForMainClass() {
+    BuildResult showLabels = testProject.build("showMainClass");
+    assertThat(showLabels.getOutput()).contains("mainClass value updated");
+  }
+
+  @Test
+  public void testLazyEvalForJvmFlags() {
+    BuildResult showLabels = testProject.build("showJvmFlags");
+    assertThat(showLabels.getOutput()).contains("jvmFlags value [updated]");
   }
 
   private Project createProject(String... plugins) {

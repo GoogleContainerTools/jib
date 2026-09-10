@@ -30,7 +30,7 @@ import org.junit.Test;
 /** Integration tests for {@link ManifestChecker}. */
 public class ManifestCheckerIntegrationTest {
 
-  /** A known manifest list sha for openjdk:11-jre-slim. */
+  /** A known manifest list sha for gcr.io/distroless/base. */
   private static final String KNOWN_MANIFEST =
       "sha256:44cbdb9c24e123882d7894ba78fb6f572d2496889885a47eb4b32241a8c07a00";
 
