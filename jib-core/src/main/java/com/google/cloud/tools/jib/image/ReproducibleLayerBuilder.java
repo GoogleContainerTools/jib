@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -76,11 +77,11 @@ public class ReproducibleLayerBuilder {
       if (namePath.getParent() != namePath.getRoot()) {
         Path tarArchiveParentDir = Verify.verifyNotNull(namePath.getParent());
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, tarArchiveParentDir.toString());
-        dir.setModTime(FileEntriesLayer.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         dir.setUserId(0);
         dir.setGroupId(0);
         dir.setUserName("");
         dir.setGroupName("");
+        clearTimeHeaders(dir, FileEntriesLayer.DEFAULT_MODIFICATION_TIME);
         add(dir);
       }
 
@@ -93,6 +94,20 @@ public class ReproducibleLayerBuilder {
       sortedEntries.sort(Comparator.comparing(TarArchiveEntry::getName));
       return sortedEntries;
     }
+  }
+
+  private static void clearTimeHeaders(TarArchiveEntry entry, Instant modTime) {
+    entry.setModTime(modTime.toEpochMilli());
+
+    String headerTime = Long.toString(modTime.getEpochSecond());
+    final long nanos = modTime.getNano();
+    if (nanos > 0) {
+      headerTime += "." + nanos;
+    }
+    entry.addPaxHeader("mtime", headerTime);
+    entry.addPaxHeader("atime", headerTime);
+    entry.addPaxHeader("ctime", headerTime);
+    entry.addPaxHeader("LIBARCHIVE.creationtime", headerTime);
   }
 
   private static void setUserAndGroup(TarArchiveEntry entry, FileEntry layerEntry) {
@@ -156,8 +171,8 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
       setUserAndGroup(entry, layerEntry);
+      clearTimeHeaders(entry, layerEntry.getModificationTime());
 
       uniqueTarArchiveEntries.add(entry);
     }

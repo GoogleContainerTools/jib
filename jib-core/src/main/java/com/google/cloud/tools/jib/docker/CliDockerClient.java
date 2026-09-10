@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.DockerClient;
+import com.google.cloud.tools.jib.api.DockerInfoDetails;
 import com.google.cloud.tools.jib.api.ImageDetails;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
@@ -46,6 +47,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -101,6 +108,12 @@ public class CliDockerClient implements DockerClient {
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
+
+  /**
+   * 10 minute timeout to ensure that Jib doesn't get stuck indefinitely when expecting a docker
+   * output.
+   */
+  public static final Long DOCKER_OUTPUT_TIMEOUT = (long) 10 * 60 * 1000;
 
   /**
    * Checks if Docker is installed on the user's system by running the `docker` command.
@@ -185,6 +198,24 @@ public class CliDockerClient implements DockerClient {
   }
 
   @Override
+  public DockerInfoDetails info() throws IOException, InterruptedException {
+    // Runs 'docker info'.
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<DockerInfoDetails> readerFuture = executor.submit(this::fetchInfoDetails);
+    try {
+      DockerInfoDetails details = readerFuture.get(DOCKER_OUTPUT_TIMEOUT, TimeUnit.MILLISECONDS);
+      return details;
+    } catch (TimeoutException e) {
+      readerFuture.cancel(true); // Interrupt the reader thread
+      throw new IOException("Timeout reached while waiting for 'docker info' output");
+    } catch (ExecutionException e) {
+      throw new IOException("Failed to read output of 'docker info': " + e.getMessage());
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  @Override
   public String load(ImageTarball imageTarball, Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
     // Runs 'docker load'.
@@ -246,15 +277,38 @@ public class CliDockerClient implements DockerClient {
       throws IOException, InterruptedException {
     Process inspectProcess =
         docker("inspect", "-f", "{{json .}}", "--type", "image", imageReference.toString());
-    if (inspectProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+
+      if (inspectProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
+      }
+
+      return JsonTemplateMapper.readJson(output, DockerImageDetails.class);
     }
-    return JsonTemplateMapper.readJson(inspectProcess.getInputStream(), DockerImageDetails.class);
   }
 
   /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
+  }
+
+  private DockerInfoDetails fetchInfoDetails() throws IOException, InterruptedException {
+    Process infoProcess = docker("info", "-f", "{{json .}}");
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(infoProcess.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+
+      if (infoProcess.waitFor() != 0) {
+        throw new IOException(
+            "'docker info' command failed with error: " + getStderrOutput(infoProcess));
+      }
+
+      return JsonTemplateMapper.readJson(output, DockerInfoDetails.class);
+    }
   }
 }

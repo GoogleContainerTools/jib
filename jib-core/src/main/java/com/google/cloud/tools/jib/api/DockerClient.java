@@ -69,4 +69,15 @@ public interface DockerClient {
    * @throws InterruptedException if the {@code docker inspect} process was interrupted
    */
   ImageDetails inspect(ImageReference imageReference) throws IOException, InterruptedException;
+
+  /**
+   * Gets docker info details of local docker installation.
+   *
+   * @return docker info details.
+   * @throws IOException if an I/O exception occurs or {@code docker info} failed
+   * @throws InterruptedException if the {@code docker info} process was interrupted
+   */
+  default DockerInfoDetails info() throws IOException, InterruptedException {
+    return new DockerInfoDetails();
+  }
 }

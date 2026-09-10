@@ -27,7 +27,7 @@ For information about the project, see the [Jib project README](../README.md).
   * [Additional Build Artifacts](#additional-build-artifacts)
 * [Multi Module Projects](#multi-module-projects)
 * [Extended Usage](#extended-usage)
-  * [System Properties](#system-properties)
+  * [Configuration Properties](#configuration-properties)
   * [Global Jib Configuration](#global-jib-configuration)
   * [Example](#example)
   * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
@@ -48,7 +48,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.3.2:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.5.2:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -56,7 +56,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:3.3.2:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.5.2:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -74,7 +74,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.3.2</version>
+        <version>3.5.2</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -134,7 +134,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 </configuration>
 ```
 
-#### Using [JFrog Container Registry (JCR)](https://www.jfrog.com/confluence/display/JFROG/JFrog+Container+Registry/) or [JFrog Artifactory](https://www.jfrog.com/confluence/display/JFROG/Getting+Started+with+Artifactory+as+a+Docker+Registry)...
+#### Using [JFrog Container Registry (JCR)](https://jfrog.com/container-registry) or [JFrog Artifactory](https://jfrog.com/help/r/jfrog-artifactory-documentation/getting-started-with-artifactory-as-a-docker-registry)...
 
 *Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
@@ -259,12 +259,12 @@ Field | Type | Default | Description
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
-Property | Type | Default | Description
---- | --- | --- | ---
-`image` | string | `eclipse-temurin:{8,11,17}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-object) | *None* | Specifies credentials directly (alternative to `credHelper`).
-`credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
-`platforms` | list | See [`platform`](#platform-object) | Configures platforms of base images to select from a manifest list.
+Property | Type | Default                                                   | Description
+--- | --- |-----------------------------------------------------------| ---
+`image` | string | `eclipse-temurin:{8,11,17,21,25}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`auth` | [`auth`](#auth-object) | *None*                                                    | Specifies credentials directly (alternative to `credHelper`).
+`credHelper` | string | *None*                                                    | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | list | See [`platform`](#platform-object)                        | Configures platforms of base images to select from a manifest list.
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
@@ -344,9 +344,9 @@ Property | Type | Default | Description
 `executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon. **Please note**: Users are responsible for ensuring that the Docker path passed in is valid and has the right permissions to be executed.
 `environment` | map | *None* | Sets environment variables used by the Docker executable.
 
-#### System Properties
+#### Configuration Properties
 
-Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
+Each of these parameters is configurable via commandline using properties. Jib's properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
 ```shell
 mvn compile jib:build \
     -Djib.to.image=myregistry/myimage:latest \
@@ -359,7 +359,7 @@ mvn compile jib:dockerBuild \
     -Djib.container.args=arg1,arg2,arg3
 ```
 
-The following table contains additional system properties that are not available as build configuration parameters:
+The following table contains additional properties that are not available as build configuration parameters:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
@@ -389,7 +389,7 @@ Some options can be set in the global Jib configuration file. The file is at the
 #### Properties
 
 * `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
-* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfully pull a base image.
 
 ```json
 {

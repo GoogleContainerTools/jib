@@ -9,7 +9,8 @@
       "platform": {
         "architecture": "ppc64le",
         "os": "linux"
-      }
+      },
+      "artifactType": "application/vnd.docker.container.image.v1+json"
     },
     {
       "mediaType": "application/vnd.docker.image.manifest.v2+json",

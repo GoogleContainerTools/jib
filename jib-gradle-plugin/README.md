@@ -53,7 +53,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '3.3.2'
+  id 'com.google.cloud.tools.jib' version '3.5.4'
 }
 ```
 
@@ -109,7 +109,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 jib.to.image = 'my-docker-id/my-app'
 ```
 
-#### Using [JFrog Container Registry (JCR)](https://www.jfrog.com/confluence/display/JFROG/JFrog+Container+Registry/) or [JFrog Artifactory](https://www.jfrog.com/confluence/display/JFROG/Getting+Started+with+Artifactory+as+a+Docker+Registry)...
+#### Using [JFrog Container Registry (JCR)](https://jfrog.com/container-registry) or [JFrog Artifactory](https://jfrog.com/help/r/jfrog-artifactory-documentation/getting-started-with-artifactory-as-a-docker-registry)...
 
 *Make sure you have a [docker-credential-helper](https://github.com/docker/docker-credential-helpers#available-programs) set up. For example, on macOS, the credential helper would be `docker-credential-osxkeychain`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
 
@@ -210,12 +210,12 @@ Field | Type | Default | Description
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
 
-Property | Type | Default | Description
---- | --- | --- | ---
-`image` | `String` | `eclipse-temurin:{8,11,17}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
-`auth` | [`auth`](#auth-closure) | *None* | Specifies credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
-`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure) | Configures platforms of base images to select from a manifest list.
+Property | Type | Default                                                    | Description
+--- | --- |------------------------------------------------------------| ---
+`image` | `String` | `eclipse-temurin:{8,11,17,21,25}-jre` (or `jetty` for WAR) | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
+`auth` | [`auth`](#auth-closure) | *None*                                                     | Specifies credentials directly (alternative to `credHelper`).
+`credHelper` | `String` | *None*                                                     | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
+`platforms` | [`platforms`](#platforms-closure) | See [`platforms`](#platforms-closure)                      | Configures platforms of base images to select from a manifest list.
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -314,7 +314,7 @@ The following table contains additional system properties that are not available
 Property | Type | Default | Description
 --- | --- | --- | ---
 `jib.httpTimeout` | `int` | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
-`jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
+`jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Gradle projects.
 `jib.baseImageCache` | `File` | *Platform-dependent*\*\*\* | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
 `jib.applicationCache` | `File` | `[project dir]/build/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
@@ -339,7 +339,7 @@ Some options can be set in the global Jib configuration file. The file is at the
 #### Properties
 
 * `disableUpdateCheck`: when set to true, disables the periodic up-to-date version check.
-* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfuly pull a base image.
+* `registryMirrors`: a list of mirror settings for each base image registry. In the following example, if the base image configured in Jib is for a Docker Hub image, then `mirror.gcr.io`, `localhost:5000`, and the Docker Hub (`registry-1.docker.io`) are tried in order until Jib can successfully pull a base image.
 
 ```json
 {

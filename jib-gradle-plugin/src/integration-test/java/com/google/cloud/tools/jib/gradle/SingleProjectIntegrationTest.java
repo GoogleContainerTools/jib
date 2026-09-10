@@ -592,4 +592,14 @@ public class SingleProjectIntegrationTest {
                 simpleTestProject, targetImage, "build-cred-helper.gradle"))
         .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
   }
+
+  @Test
+  public void testToDockerDaemon_multiPlatform()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "multiplatform:gradle" + System.nanoTime();
+    assertThat(
+            JibRunHelper.buildToDockerDaemonAndRun(
+                simpleTestProject, targetImage, "build-multi-platform.gradle"))
+        .isEqualTo("Hello, world. \n1970-01-01T00:00:01Z\n");
+  }
 }

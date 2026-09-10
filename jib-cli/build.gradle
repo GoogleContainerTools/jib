@@ -12,7 +12,7 @@ ext {
 // use `installDist` or `distZip` to create an installable application
 application {
   applicationName = 'jib'
-  mainClassName = cliMainClass
+  mainClass = cliMainClass
 }
 
 sourceSets.main.java.srcDirs += ["${buildDir}/generated-src"]

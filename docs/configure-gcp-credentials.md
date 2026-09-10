@@ -1,6 +1,6 @@
 # Configuring Credentials for [Google Container Registry (GCR)](https://cloud.google.com/container-registry/)
 
-There are a few ways of supplying Jib with the credentials to push and pull images from your private GCR regsitry.
+There are a few ways of supplying Jib with the credentials to push and pull images from your private GCR registry.
 
 ## Using the Docker credential helper
 
