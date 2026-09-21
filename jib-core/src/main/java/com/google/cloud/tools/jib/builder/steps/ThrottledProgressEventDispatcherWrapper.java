@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -45,7 +46,7 @@ class ThrottledProgressEventDispatcherWrapper implements Closeable {
   }
 
   public void dispatchProgress(Long progressUnits) {
-    Preconditions.checkNotNull(throttledDispatcher);
+    Objects.requireNonNull(throttledDispatcher);
     throttledDispatcher.accept(progressUnits);
   }
 
