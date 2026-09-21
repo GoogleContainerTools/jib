@@ -51,10 +51,15 @@ class ThrottledProgressEventDispatcherWrapper implements Closeable {
 
   @Override
   public void close() {
-    Preconditions.checkNotNull(progressEventDispatcher);
-    Preconditions.checkNotNull(throttledDispatcher);
-    throttledDispatcher.close();
-    progressEventDispatcher.close();
+    try {
+      if (throttledDispatcher != null) {
+        throttledDispatcher.close();
+      }
+    } finally {
+      if (progressEventDispatcher != null) {
+        progressEventDispatcher.close();
+      }
+    }
   }
 
   void setProgressTarget(long allocationUnits) {
