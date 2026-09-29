@@ -20,20 +20,39 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
+import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Answers;
@@ -45,6 +64,8 @@ import org.mockito.stubbing.Answer3;
 /** Tests for {@link ObtainBaseImageLayerStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ObtainBaseImageLayerStepTest {
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private DescriptorDigest existingLayerDigest;
   private DescriptorDigest freshLayerDigest;
@@ -176,6 +197,70 @@ public class ObtainBaseImageLayerStepTest {
               + "Jib in online mode with \"-Djib.alwaysCacheBaseImage=true\" to re-download the "
               + "base image layers.",
           ex.getMessage());
+    }
+  }
+
+  /**
+   * Simulates parallel builds (e.g., {@code mvn -T 1C}) whose modules share a base image and a
+   * cache: both builds start pulling the same base image layer at the same time.
+   */
+  @Test
+  public void testParallelBuilds_sameLayerIsPulledOnlyOnce() throws Exception {
+    System.setProperty("jib.parallelBuild", "true");
+    try {
+      ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+      try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
+        gzip.write("layer contents".getBytes(StandardCharsets.UTF_8));
+      }
+      byte[] layerBytes = compressed.toByteArray();
+      DescriptorDigest layerDigest =
+          Blobs.from(new ByteArrayInputStream(layerBytes))
+              .writeTo(ByteStreams.nullOutputStream())
+              .getDigest();
+      Layer layer = new ReferenceLayer(new BlobDescriptor(layerDigest), layerDigest);
+
+      Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+      Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
+
+      // Each pull waits (briefly) for the other build to also start pulling the same layer.
+      AtomicInteger pullCount = new AtomicInteger();
+      CountDownLatch bothPulling = new CountDownLatch(2);
+      Mockito.doAnswer(
+              invocation -> {
+                Consumer<Long> progressSizeConsumer = invocation.getArgument(1);
+                progressSizeConsumer.accept((long) layerBytes.length);
+                pullCount.incrementAndGet();
+                bothPulling.countDown();
+                bothPulling.await(2, TimeUnit.SECONDS);
+                return Blobs.from(new ByteArrayInputStream(layerBytes));
+              })
+          .when(registryClient)
+          .pullBlob(Mockito.eq(layerDigest), Mockito.any(), Mockito.any());
+
+      ExecutorService executor = Executors.newFixedThreadPool(2);
+      try {
+        List<Future<PreparedLayer>> results = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+          Callable<PreparedLayer> build =
+              ObtainBaseImageLayerStep.forForcedDownload(
+                  buildContext, progressDispatcherFactory, layer, registryClient);
+          results.add(executor.submit(build));
+        }
+        for (Future<PreparedLayer> result : results) {
+          try {
+            Assert.assertNotNull(result.get(30, TimeUnit.SECONDS));
+          } catch (ExecutionException ex) {
+            throw new AssertionError(ex.getCause());
+          }
+        }
+      } finally {
+        executor.shutdownNow();
+      }
+
+      Assert.assertEquals(
+          "the same base image layer should be downloaded only once", 1, pullCount.get());
+    } finally {
+      System.clearProperty("jib.parallelBuild");
     }
   }
 }
