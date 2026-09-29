@@ -206,61 +206,56 @@ public class ObtainBaseImageLayerStepTest {
    */
   @Test
   public void testParallelBuilds_sameLayerIsPulledOnlyOnce() throws Exception {
-    System.setProperty("jib.parallelBuild", "true");
-    try {
-      ByteArrayOutputStream compressed = new ByteArrayOutputStream();
-      try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
-        gzip.write("layer contents".getBytes(StandardCharsets.UTF_8));
-      }
-      byte[] layerBytes = compressed.toByteArray();
-      DescriptorDigest layerDigest =
-          Blobs.from(new ByteArrayInputStream(layerBytes))
-              .writeTo(ByteStreams.nullOutputStream())
-              .getDigest();
-      Layer layer = new ReferenceLayer(new BlobDescriptor(layerDigest), layerDigest);
-
-      Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
-      Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
-
-      // Each pull waits (briefly) for the other build to also start pulling the same layer.
-      AtomicInteger pullCount = new AtomicInteger();
-      CountDownLatch bothPulling = new CountDownLatch(2);
-      Mockito.doAnswer(
-              invocation -> {
-                Consumer<Long> progressSizeConsumer = invocation.getArgument(1);
-                progressSizeConsumer.accept((long) layerBytes.length);
-                pullCount.incrementAndGet();
-                bothPulling.countDown();
-                bothPulling.await(2, TimeUnit.SECONDS);
-                return Blobs.from(new ByteArrayInputStream(layerBytes));
-              })
-          .when(registryClient)
-          .pullBlob(Mockito.eq(layerDigest), Mockito.any(), Mockito.any());
-
-      ExecutorService executor = Executors.newFixedThreadPool(2);
-      try {
-        List<Future<PreparedLayer>> results = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-          Callable<PreparedLayer> build =
-              ObtainBaseImageLayerStep.forForcedDownload(
-                  buildContext, progressDispatcherFactory, layer, registryClient);
-          results.add(executor.submit(build));
-        }
-        for (Future<PreparedLayer> result : results) {
-          try {
-            Assert.assertNotNull(result.get(30, TimeUnit.SECONDS));
-          } catch (ExecutionException ex) {
-            throw new AssertionError(ex.getCause());
-          }
-        }
-      } finally {
-        executor.shutdownNow();
-      }
-
-      Assert.assertEquals(
-          "the same base image layer should be downloaded only once", 1, pullCount.get());
-    } finally {
-      System.clearProperty("jib.parallelBuild");
+    ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+    try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
+      gzip.write("layer contents".getBytes(StandardCharsets.UTF_8));
     }
+    byte[] layerBytes = compressed.toByteArray();
+    DescriptorDigest layerDigest =
+        Blobs.from(new ByteArrayInputStream(layerBytes))
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Layer layer = new ReferenceLayer(new BlobDescriptor(layerDigest), layerDigest);
+
+    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
+    Mockito.when(buildContext.getBaseImageLayersCache()).thenReturn(cache);
+
+    // Each pull waits (briefly) for the other build to also start pulling the same layer.
+    AtomicInteger pullCount = new AtomicInteger();
+    CountDownLatch bothPulling = new CountDownLatch(2);
+    Mockito.doAnswer(
+            invocation -> {
+              Consumer<Long> progressSizeConsumer = invocation.getArgument(1);
+              progressSizeConsumer.accept((long) layerBytes.length);
+              pullCount.incrementAndGet();
+              bothPulling.countDown();
+              bothPulling.await(2, TimeUnit.SECONDS);
+              return Blobs.from(new ByteArrayInputStream(layerBytes));
+            })
+        .when(registryClient)
+        .pullBlob(Mockito.eq(layerDigest), Mockito.any(), Mockito.any());
+
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    try {
+      List<Future<PreparedLayer>> results = new ArrayList<>();
+      for (int i = 0; i < 2; i++) {
+        Callable<PreparedLayer> build =
+            ObtainBaseImageLayerStep.forForcedDownload(
+                buildContext, progressDispatcherFactory, layer, registryClient);
+        results.add(executor.submit(build));
+      }
+      for (Future<PreparedLayer> result : results) {
+        try {
+          Assert.assertNotNull(result.get(30, TimeUnit.SECONDS));
+        } catch (ExecutionException ex) {
+          throw new AssertionError(ex.getCause());
+        }
+      }
+    } finally {
+      executor.shutdownNow();
+    }
+
+    Assert.assertEquals(
+        "the same base image layer should be downloaded only once", 1, pullCount.get());
   }
 }
