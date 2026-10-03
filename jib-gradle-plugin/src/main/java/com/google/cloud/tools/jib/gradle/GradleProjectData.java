@@ -29,6 +29,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.logging.configuration.ConsoleOutput;
@@ -122,7 +123,7 @@ public class GradleProjectData {
     warFilePath = providers.provider(() -> computeWarFilePath(project));
     jarFile = providers.provider(() -> computeJarFile(project));
     mainClassFromJar = providers.provider(() -> computeMainClassFromJar(project));
-    buildDirectory = providers.provider(project::getBuildDir);
+    buildDirectory = layout.getBuildDirectory().map(Directory::getAsFile);
     majorJavaVersion = providers.provider(() -> computeMajorJavaVersion(project));
   }
 
