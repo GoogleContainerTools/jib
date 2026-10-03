@@ -198,6 +198,16 @@ public class JibPlugin implements Plugin<Project> {
           jibTaskProviders.forEach(
               provider ->
                   provider.configure(task -> jibDependencies.forEach(dep -> task.dependsOn(dep))));
+
+          if (!jibExtension.getPluginExtensions().get().isEmpty()) {
+            // Jib plugin extensions get access to the Gradle project at execution time.
+            jibTaskProviders.forEach(
+                provider ->
+                    provider.configure(
+                        task ->
+                            TaskCommon.notCompatibleWithConfigurationCache(
+                                task, "Jib plugin extensions require the Gradle project")));
+          }
         });
   }
 }

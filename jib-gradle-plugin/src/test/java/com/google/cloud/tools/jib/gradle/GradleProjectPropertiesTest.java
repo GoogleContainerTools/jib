@@ -218,8 +218,8 @@ public class GradleProjectPropertiesTest {
 
     List<Path> extraDirectories = Arrays.asList(applicationDirectory.resolve("extra-directory"));
     FileCollection fileCollection =
-        GradleProjectProperties.getInputFiles(
-            project, extraDirectories, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+        GradleProjectData.create(project, () -> JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+            .getInputFiles(extraDirectories);
 
     assertThat(fileCollection)
         .comparingElementsUsing(FILE_PATH_OF)
