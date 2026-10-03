@@ -34,6 +34,9 @@ import org.junit.Test;
 /** Tests that the Jib tasks are compatible with the Gradle configuration cache. */
 public class ConfigurationCacheTest {
 
+  // Gradle 9 requires Java 17 to run, but this build's tests also run on Java 8 and 11, so the
+  // latest Gradle 8 is used. Note that Gradle 9 is stricter: it also fails when two Jib tasks share
+  // the JibExtension and one of them is recorded as its owner (see the final getJib() getters).
   private static final String GRADLE_VERSION = "8.14.3";
 
   @ClassRule
