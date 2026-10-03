@@ -212,7 +212,7 @@ public class GradleProjectData {
    *
    * @return the dependency files
    */
-  public FileCollection getDependencyFiles() {
+  FileCollection getDependencyFiles() {
     return dependencyFiles;
   }
 
