@@ -35,10 +35,13 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.InternetDomainName;
 import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -265,6 +268,18 @@ public class RegistryAuthenticator {
     try {
       URL url = getAuthenticationUrl(credential, repositoryScopes);
 
+      if (credential != null && !isRealmTrusted(url, registryUrl)) {
+        throw new RegistryAuthenticationFailedException(
+            registryUrl,
+            imageName,
+            "Refusing to send credentials to the authentication server "
+                + url.getHost()
+                + ", which is not related to the registry host. If this server is expected, add its "
+                + "host name to the "
+                + JibSystemProperties.TRUSTED_AUTH_HOSTS
+                + " system property");
+      }
+
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
@@ -306,6 +321,40 @@ public class RegistryAuthenticator {
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(registryUrl, imageName, ex);
+    }
+  }
+
+  /**
+   * Checks whether credentials may be sent to the authentication realm. The realm host must be the
+   * registry host, or share its registrable domain (for example, {@code registry-1.docker.io} and
+   * {@code auth.docker.io}).
+   */
+  @VisibleForTesting
+  static boolean isRealmTrusted(URL realmUrl, String registryServer) {
+    String realmHost = realmUrl.getHost().toLowerCase(Locale.ROOT);
+    String registryHost;
+    try {
+      registryHost =
+          HostAndPort.fromString(
+                  registryServer.replaceFirst("^[a-zA-Z]+://", "").replaceFirst("/.*$", ""))
+              .getHost()
+              .toLowerCase(Locale.ROOT);
+    } catch (IllegalArgumentException ex) {
+      return false;
+    }
+    if (realmHost.equals(registryHost)
+        || JibSystemProperties.getTrustedAuthHosts().contains(realmHost)) {
+      return true;
+    }
+    try {
+      InternetDomainName realmDomain = InternetDomainName.from(realmHost);
+      InternetDomainName registryDomain = InternetDomainName.from(registryHost);
+      return realmDomain.isUnderPublicSuffix()
+          && registryDomain.isUnderPublicSuffix()
+          && realmDomain.topPrivateDomain().equals(registryDomain.topPrivateDomain());
+    } catch (IllegalArgumentException ex) {
+      // e.g. IP addresses
+      return false;
     }
   }
 }

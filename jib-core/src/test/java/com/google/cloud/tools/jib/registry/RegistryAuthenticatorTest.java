@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
@@ -349,5 +351,130 @@ public class RegistryAuthenticatorTest {
         JsonTemplateMapper.readJson(
             input, RegistryAuthenticator.AuthenticationResponseTemplate.class);
     Assert.assertNull(template.getToken());
+  }
+
+  @Test
+  public void testIsRealmTrusted() throws MalformedURLException {
+    Assert.assertTrue(
+        RegistryAuthenticator.isRealmTrusted(
+            new URL("https://auth.docker.io/token"), "registry-1.docker.io"));
+    Assert.assertTrue(
+        RegistryAuthenticator.isRealmTrusted(new URL("https://gcr.io/v2/token"), "gcr.io"));
+    Assert.assertTrue(
+        RegistryAuthenticator.isRealmTrusted(
+            new URL("https://reg.example.com:5001/auth"), "reg.example.com:5000"));
+    Assert.assertTrue(
+        RegistryAuthenticator.isRealmTrusted(new URL("http://localhost:5001/t"), "localhost:5000"));
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(new URL("https://evil.com/steal"), "gcr.io"));
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(
+            new URL("https://docker.io.evil.com/t"), "registry-1.docker.io"));
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(new URL("https://a.co.uk/t"), "b.co.uk"));
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(new URL("https://1.2.3.4/t"), "gcr.io"));
+  }
+
+  @Test
+  public void testAuthenticate_untrustedRealmWithCredentials_notSent() throws Exception {
+    RegistryAuthenticator authenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+                "Bearer realm=\"https://evil.example.net/steal\",service=\"s\"",
+                new RegistryEndpointRequestProperties("registry.example.com", "someimage"),
+                "user-agent",
+                httpClient)
+            .get();
+    try {
+      authenticator.authenticatePull(Credential.from("user", "secret"));
+      Assert.fail();
+    } catch (RegistryAuthenticationFailedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("Refusing to send credentials"));
+    }
+    Mockito.verify(httpClient, Mockito.never()).call(Mockito.any(), Mockito.any(), Mockito.any());
+  }
+
+  @Test
+  public void testIsRealmTrusted_configuredTrustedHost() throws MalformedURLException {
+    URL realm = new URL("https://sso.other.net/token");
+    Assert.assertFalse(RegistryAuthenticator.isRealmTrusted(realm, "registry.example.com"));
+    System.setProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS, "foo.org, SSO.other.net");
+    try {
+      Assert.assertTrue(RegistryAuthenticator.isRealmTrusted(realm, "registry.example.com"));
+    } finally {
+      System.clearProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS);
+    }
+  }
+
+  private RegistryAuthenticator authenticatorFor(String realm, String registry) throws Exception {
+    return RegistryAuthenticator.fromAuthenticationMethod(
+            "Bearer realm=\"" + realm + "\",service=\"s\"",
+            new RegistryEndpointRequestProperties(registry, "someimage"),
+            "user-agent",
+            httpClient)
+        .get();
+  }
+
+  @Test
+  public void testAuthenticate_untrustedRealmWithRefreshToken_notSent() throws Exception {
+    RegistryAuthenticator authenticator =
+        authenticatorFor("https://evil.example.net/steal", "registry.example.com");
+    try {
+      authenticator.authenticatePull(Credential.from("<token>", "refresh_token"));
+      Assert.fail();
+    } catch (RegistryAuthenticationFailedException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("Refusing to send credentials"));
+    }
+    Mockito.verify(httpClient, Mockito.never()).call(Mockito.any(), Mockito.any(), Mockito.any());
+  }
+
+  @Test
+  public void testAuthenticate_untrustedRealmAnonymous_stillRequested() throws Exception {
+    RegistryAuthenticator authenticator =
+        authenticatorFor("https://other.example.net/token", "registry.example.com");
+    Authorization authorization = authenticator.authenticatePull(null);
+    Assert.assertEquals("Bearer my_token", authorization.toString());
+    Assert.assertEquals("other.example.net", urlCaptor.getValue().getHost());
+  }
+
+  @Test
+  public void testAuthenticate_trustedRealmWithCredentials_succeeds() throws Exception {
+    RegistryAuthenticator authenticator =
+        authenticatorFor("https://auth.docker.io/token", "registry-1.docker.io");
+    Authorization authorization =
+        authenticator.authenticatePull(Credential.from("user", "password"));
+    Assert.assertEquals("Bearer my_token", authorization.toString());
+    Assert.assertEquals("auth.docker.io", urlCaptor.getValue().getHost());
+  }
+
+  @Test
+  public void testAuthenticate_configuredTrustedHostWithCredentials_succeeds() throws Exception {
+    String previous = System.getProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS);
+    System.setProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS, "sso.other.net");
+    try {
+      RegistryAuthenticator authenticator =
+          authenticatorFor("https://sso.other.net/token", "registry.example.com");
+      Assert.assertEquals(
+          "Bearer my_token",
+          authenticator.authenticatePull(Credential.from("user", "password")).toString());
+    } finally {
+      if (previous == null) {
+        System.clearProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS);
+      } else {
+        System.setProperty(JibSystemProperties.TRUSTED_AUTH_HOSTS, previous);
+      }
+    }
+  }
+
+  @Test
+  public void testIsRealmTrusted_privateSuffixSiblingsRejected() throws MalformedURLException {
+    // github.io and herokuapp.com are public suffixes: sibling sites belong to different owners.
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(new URL("https://a.github.io/t"), "b.github.io"));
+    Assert.assertFalse(
+        RegistryAuthenticator.isRealmTrusted(
+            new URL("https://x.herokuapp.com/t"), "y.herokuapp.com"));
   }
 }
