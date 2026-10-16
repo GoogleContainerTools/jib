@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.UpdateChecker;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.common.util.concurrent.Futures;
+import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -106,6 +107,24 @@ class TaskCommon {
       }
     }
     return null;
+  }
+
+  /**
+   * Marks a task as not compatible with the configuration cache. Does nothing on Gradle versions
+   * before 7.4, which do not support this.
+   *
+   * @param task the task
+   * @param reason why the task is not compatible
+   */
+  static void notCompatibleWithConfigurationCache(Task task, String reason) {
+    try {
+      Method method = Task.class.getMethod("notCompatibleWithConfigurationCache", String.class);
+      method.invoke(task, reason);
+    } catch (NoSuchMethodException ignored) {
+      // Gradle versions before 7.4
+    } catch (ReflectiveOperationException ex) {
+      throw new IllegalStateException(ex);
+    }
   }
 
   /** Disables annoying Apache HTTP client logging. */

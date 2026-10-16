@@ -58,16 +58,21 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Nullable private JibExtension jibExtension;
+  @Nullable private GradleProjectData projectData;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
    * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
    *
+   * <p>This getter is final, so that Gradle does not decorate it to attach this task as the owner
+   * of the {@link JibExtension}. The extension is shared by all Jib tasks and the configuration
+   * cache would fail to serialize the reference to the owning task from the other tasks.
+   *
    * @return the {@link JibExtension}.
    */
   @Nested
   @Nullable
-  public JibExtension getJib() {
+  public final JibExtension getJib() {
     return jibExtension;
   }
 
@@ -93,8 +98,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
         Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths().stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
-    return GradleProjectProperties.getInputFiles(
-        getProject(), extraDirectories, jibExtension.getConfigurationName().get());
+    return Preconditions.checkNotNull(projectData).getInputFiles(extraDirectories);
   }
 
   /**
@@ -127,10 +131,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
-            getProject(),
+            Preconditions.checkNotNull(projectData),
+            this::getProject,
             getLogger(),
-            tempDirectoryProvider,
-            jibExtension.getConfigurationName().get());
+            tempDirectoryProvider);
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
@@ -213,6 +217,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @Override
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    this.projectData =
+        GradleProjectData.create(getProject(), () -> jibExtension.getConfigurationName().get());
     return this;
   }
 }
