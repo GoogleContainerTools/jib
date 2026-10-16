@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
+**PLEASE READ**: If you have a support contract with Google, please create an issue in the 
+[support console](https://cloud.google.com/support/) instead of filing on GitHub. This will ensure 
+a timely response.
+
 <!--
 Please follow the guidelines below before opening an issue:
 1. Ensure the issue was not already reported. 
