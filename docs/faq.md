@@ -534,7 +534,6 @@ The default when not specified is a single "amd64/linux" platform, whose behavio
 When multiple platforms are specified, Jib creates and pushes a manifest list (also known as a fat manifest) after building and pushing all the images for the specified platforms.
 
 As an incubating feature, there are certain limitations:
-- OCI image indices are not supported (as opposed to Docker manifest lists).
 - Only `architecture` and `os` are supported. If the base image manifest list contains multiple images with the given architecture and os, the first image will be selected.
 - Does not support using a local Docker daemon or tarball image for a base image.
 - Does not support pushing to a Docker daemon (`jib:dockerBuild` / `jibDockerBuild`) or building a local tarball (`jib:buildTar` / `jibBuildTar`).
