@@ -61,12 +61,23 @@ public class Cache {
     return new Cache(new CacheStorageFiles(cacheDirectory));
   }
 
+  private final CacheStorageFiles cacheStorageFiles;
   private final CacheStorageWriter cacheStorageWriter;
   private final CacheStorageReader cacheStorageReader;
 
   private Cache(CacheStorageFiles cacheStorageFiles) {
+    this.cacheStorageFiles = cacheStorageFiles;
     cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
     cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+  }
+
+  /**
+   * Gets the directory this cache stores its data in.
+   *
+   * @return the cache directory
+   */
+  public Path getDirectory() {
+    return cacheStorageFiles.getCacheDirectory();
   }
 
   /**
