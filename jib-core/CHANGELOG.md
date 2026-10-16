@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- Jib now refuses to send credentials in its initial token request when the `realm` in the registry's `WWW-Authenticate` header points to a host unrelated to the registry. If a registry legitimately uses such a token server, list its host in the `jib.trustedAuthHosts` system property (#4523)
 
 ### Fixed
 

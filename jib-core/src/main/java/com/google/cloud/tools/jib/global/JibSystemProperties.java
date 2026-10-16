@@ -18,7 +18,10 @@ package com.google.cloud.tools.jib.global;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Range;
+import java.util.Locale;
+import java.util.Set;
 
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
@@ -32,6 +35,8 @@ public class JibSystemProperties {
 
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
   public static final String SERIALIZE = "jib.serialize";
+
+  @VisibleForTesting public static final String TRUSTED_AUTH_HOSTS = "jib.trustedAuthHosts";
 
   @VisibleForTesting public static final String SKIP_EXISTING_IMAGES = "jib.skipExistingImages";
 
@@ -80,6 +85,27 @@ public class JibSystemProperties {
    */
   public static boolean sendCredentialsOverHttp() {
     return Boolean.getBoolean(SEND_CREDENTIALS_OVER_HTTP);
+  }
+
+  /**
+   * Gets extra hosts that may receive registry credentials as token-authentication servers even if
+   * they are unrelated to the registry host. This is defined by the {@code jib.trustedAuthHosts}
+   * system property as a comma-separated list of host names.
+   *
+   * @return the lower-cased trusted host names, empty if the property is not set
+   */
+  public static Set<String> getTrustedAuthHosts() {
+    String value = System.getProperty(TRUSTED_AUTH_HOSTS);
+    if (Strings.isNullOrEmpty(value)) {
+      return ImmutableSet.of();
+    }
+    ImmutableSet.Builder<String> hosts = ImmutableSet.builder();
+    for (String host : value.split(",")) {
+      if (!host.trim().isEmpty()) {
+        hosts.add(host.trim().toLowerCase(Locale.ROOT));
+      }
+    }
+    return hosts.build();
   }
 
   /**
