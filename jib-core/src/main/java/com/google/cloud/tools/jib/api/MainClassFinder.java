@@ -44,6 +44,9 @@ import org.objectweb.asm.Opcodes;
  *   <li>{@code void main()} - instance main without parameters
  * </ul>
  *
+ * <p>Instance main methods are only recognized in concrete classes with a non-private constructor
+ * that takes no parameters, since the launcher must be able to instantiate the class.
+ *
  * <p>For class files compiled with earlier Java versions, only the traditional {@code public static
  * void main(String[] args)} is recognized.
  */
@@ -134,11 +137,25 @@ public class MainClassFinder {
     private static final int OPTIONAL_MODIFIERS =
         Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED | Opcodes.ACC_VARARGS | Opcodes.ACC_SYNTHETIC;
 
-    private boolean visitedMainClass;
+    private boolean visitedStaticMain;
+    private boolean visitedInstanceMain;
+    private boolean hasNonPrivateNoArgsConstructor;
+    private boolean isInstantiable;
     private int classVersion;
 
     private MainClassVisitor() {
       super(Opcodes.ASM9);
+    }
+
+    /**
+     * Whether the visited class is a main class. An instance main method can only be launched if
+     * the class can be instantiated with a non-private constructor with no parameters (JEP 512).
+     * For example, this excludes the {@code Main$} class that Scala 2 generates for {@code object
+     * Main}, which has an instance {@code main} method but a private constructor.
+     */
+    private boolean visitedMainClass() {
+      return visitedStaticMain
+          || (visitedInstanceMain && isInstantiable && hasNonPrivateNoArgsConstructor);
     }
 
     @Override
@@ -150,6 +167,7 @@ public class MainClassFinder {
         String superName,
         String[] interfaces) {
       this.classVersion = version;
+      this.isInstantiable = (access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE)) == 0;
       super.visit(version, access, name, signature, superName, interfaces);
     }
 
@@ -157,6 +175,12 @@ public class MainClassFinder {
     @Nullable
     public MethodVisitor visitMethod(
         int access, String name, String descriptor, String signature, String[] exceptions) {
+      if (name.equals("<init>")) {
+        if (descriptor.equals(MAIN_NO_ARGS_DESCRIPTOR) && (access & Opcodes.ACC_PRIVATE) == 0) {
+          hasNonPrivateNoArgsConstructor = true;
+        }
+        return null;
+      }
       if (!name.equals("main")) {
         return null;
       }
@@ -171,7 +195,7 @@ public class MainClassFinder {
         int requiredAccess = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
         if ((access & ~OPTIONAL_MODIFIERS) == requiredAccess
             && descriptor.equals(MAIN_WITH_ARGS_DESCRIPTOR)) {
-          visitedMainClass = true;
+          visitedStaticMain = true;
         }
         return null;
       }
@@ -187,8 +211,10 @@ public class MainClassFinder {
 
       int relevantAccess =
           access & ~(Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | OPTIONAL_MODIFIERS);
-      if (relevantAccess == Opcodes.ACC_STATIC || relevantAccess == 0) {
-        visitedMainClass = true;
+      if (relevantAccess == Opcodes.ACC_STATIC) {
+        visitedStaticMain = true;
+      } else if (relevantAccess == 0) {
+        visitedInstanceMain = true;
       }
 
       return null;
@@ -225,7 +251,7 @@ public class MainClassFinder {
       try (InputStream classFileInputStream = Files.newInputStream(file)) {
         ClassReader reader = new ClassReader(classFileInputStream);
         reader.accept(mainClassVisitor, 0);
-        if (mainClassVisitor.visitedMainClass) {
+        if (mainClassVisitor.visitedMainClass()) {
           mainClasses.add(reader.getClassName().replace('/', '.'));
         }
 
