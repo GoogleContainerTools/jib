@@ -40,7 +40,7 @@ import org.gradle.api.tasks.Optional;
 public class ContainerParameters {
 
   private final ListProperty<String> jvmFlags;
-  private Map<String, String> environment = Collections.emptyMap();
+  private MapProperty<String, String> environment;
   private ListProperty<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
   private boolean expandClasspathDependencies;
@@ -59,6 +59,7 @@ public class ContainerParameters {
   @Inject
   public ContainerParameters(ObjectFactory objectFactory) {
     labels = objectFactory.mapProperty(String.class, String.class).empty();
+    environment = objectFactory.mapProperty(String.class, String.class).empty();
     filesModificationTime = objectFactory.property(String.class).convention("EPOCH_PLUS_SECOND");
     creationTime = objectFactory.property(String.class).convention("EPOCH");
     mainClass = objectFactory.property(String.class);
@@ -109,16 +110,24 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public Map<String, String> getEnvironment() {
-    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
+  public MapProperty<String, String> getEnvironment() {
+    String envProperty = System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT);
+    if (envProperty != null) {
+      Map<String, String> parsedEnvironment =
+          ConfigurationPropertyValidator.parseMapProperty(envProperty);
+      if (!parsedEnvironment.equals(environment.get())) {
+        environment.set(parsedEnvironment);
+      }
     }
     return environment;
   }
 
   public void setEnvironment(Map<String, String> environment) {
-    this.environment = environment;
+    this.environment.set(environment);
+  }
+
+  public void setEnvironment(Provider<Map<String, String>> environment) {
+    this.environment.set(environment);
   }
 
   @Input
