@@ -40,6 +40,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.SourceSet;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -238,7 +239,8 @@ public class GradleProjectPropertiesExtensionTest {
             mockLogger,
             mockTempDirectoryProvider,
             () -> loadedExtensions,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME,
+            SourceSet.MAIN_SOURCE_SET_NAME);
   }
 
   @Test

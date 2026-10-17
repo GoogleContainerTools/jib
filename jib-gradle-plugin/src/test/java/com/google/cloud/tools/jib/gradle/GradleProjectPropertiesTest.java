@@ -69,6 +69,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -168,7 +169,8 @@ public class GradleProjectPropertiesTest {
             mockLogger,
             mockTempDirectoryProvider,
             mockExtensionLoader,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME,
+            SourceSet.MAIN_SOURCE_SET_NAME);
   }
 
   @Test
@@ -219,7 +221,10 @@ public class GradleProjectPropertiesTest {
     List<Path> extraDirectories = Arrays.asList(applicationDirectory.resolve("extra-directory"));
     FileCollection fileCollection =
         GradleProjectProperties.getInputFiles(
-            project, extraDirectories, JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            project,
+            extraDirectories,
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME,
+            SourceSet.MAIN_SOURCE_SET_NAME);
 
     assertThat(fileCollection)
         .comparingElementsUsing(FILE_PATH_OF)
@@ -341,7 +346,8 @@ public class GradleProjectPropertiesTest {
             mockLogger,
             mockTempDirectoryProvider,
             mockExtensionLoader,
-            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+            JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME,
+            SourceSet.MAIN_SOURCE_SET_NAME);
 
     gradleProjectProperties.createJibContainerBuilder(
         JavaContainerBuilder.from(RegistryImage.named("base")), ContainerizingMode.EXPLODED);

@@ -99,7 +99,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             getProject(),
             getLogger(),
             tempDirectoryProvider,
-            jibExtension.getConfigurationName().get());
+            jibExtension.getConfigurationName().get(),
+            jibExtension.getSourceSetName().get());
     GlobalConfig globalConfig = GlobalConfig.readConfig();
     Future<Optional<String>> updateCheckFuture =
         TaskCommon.newUpdateChecker(projectProperties, globalConfig, getLogger());
