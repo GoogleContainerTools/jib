@@ -75,12 +75,16 @@ public class V22ManifestTemplateTest {
 
     Assert.assertEquals(1000, manifestJson.getContainerConfiguration().getSize());
 
+    ContentDescriptorTemplate layer = manifestJson.getLayers().get(0);
+
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"),
-        manifestJson.getLayers().get(0).getDigest());
+        layer.getDigest());
 
-    Assert.assertEquals(1000_000, manifestJson.getLayers().get(0).getSize());
+    Assert.assertEquals(1000_000, layer.getSize());
+
+    Assert.assertEquals("application/vnd.docker.image.rootfs.diff.tar.gzip", layer.getMediaType());
   }
 
   @Test
@@ -92,7 +96,7 @@ public class V22ManifestTemplateTest {
         JsonTemplateMapper.readJsonFromFile(jsonFile, V22ManifestTemplate.class);
 
     List<ContentDescriptorTemplate> layers = manifestJson.getLayers();
-    Assert.assertEquals(4, layers.size());
+    Assert.assertEquals(5, layers.size());
     Assert.assertNull(layers.get(0).getUrls());
     Assert.assertNull(layers.get(0).getAnnotations());
 

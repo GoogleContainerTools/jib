@@ -30,6 +30,11 @@
       "size": 4,
       "urls": ["cool-url"],
       "annotations": {"key1":"value1", "key2":"value2"}
+    },
+    {
+      "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "size": 5
     }
   ]
 }

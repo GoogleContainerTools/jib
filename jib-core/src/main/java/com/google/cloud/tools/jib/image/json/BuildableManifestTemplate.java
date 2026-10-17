@@ -42,7 +42,6 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
    */
   class ContentDescriptorTemplate implements JsonTemplate {
 
-    @SuppressWarnings("unused")
     @Nullable
     private String mediaType;
 
@@ -60,6 +59,11 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     /** Necessary for Jackson to create from JSON. */
     @SuppressWarnings("unused")
     protected ContentDescriptorTemplate() {}
+
+    @Nullable
+    public String getMediaType() {
+      return mediaType;
+    }
 
     public long getSize() {
       return size;
