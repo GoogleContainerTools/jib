@@ -22,10 +22,12 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.buildplan.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
@@ -113,6 +115,12 @@ public class JavaContainerBuilder {
    * @deprecated Use the string {@code "/jetty/webapps/ROOT"}.
    */
   @Deprecated public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
+
+  /**
+   * Number of hexadecimal characters of the content hash appended to disambiguate dependency JARs
+   * that share a filename. See {@link #computeContentHash(Path)}.
+   */
+  private static final int DUPLICATE_JAR_HASH_LENGTH = 12;
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless jetty as the base image. For
@@ -288,7 +296,7 @@ public class JavaContainerBuilder {
 
   /**
    * Adds dependency JARs to the image. Duplicate JAR filenames across all dependencies are renamed
-   * with the filesize in order to avoid collisions.
+   * with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -308,7 +316,7 @@ public class JavaContainerBuilder {
 
   /**
    * Adds dependency JARs to the image. Duplicate JAR filenames across all dependencies are renamed
-   * with the filesize in order to avoid collisions.
+   * with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -320,7 +328,7 @@ public class JavaContainerBuilder {
 
   /**
    * Adds snapshot dependency JARs to the image. Duplicate JAR filenames across all dependencies are
-   * renamed with the filesize in order to avoid collisions.
+   * renamed with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -341,7 +349,7 @@ public class JavaContainerBuilder {
 
   /**
    * Adds snapshot dependency JARs to the image. Duplicate JAR filenames across all dependencies are
-   * renamed with the filesize in order to avoid collisions.
+   * renamed with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -354,7 +362,7 @@ public class JavaContainerBuilder {
   /**
    * Adds project dependency JARs to the image. Generally, project dependency are jars produced from
    * source in this project as part of other modules/sub-projects. Duplicate JAR filenames across
-   * all dependencies are renamed with the filesize in order to avoid collisions.
+   * all dependencies are renamed with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -376,7 +384,7 @@ public class JavaContainerBuilder {
   /**
    * Adds project dependency JARs to the image. Generally, project dependency are jars produced from
    * source in this project as part of other modules/sub-projects. Duplicate JAR filenames across
-   * all dependencies are renamed with the filesize in order to avoid collisions.
+   * all dependencies are renamed with a short content hash in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -598,12 +606,12 @@ public class JavaContainerBuilder {
             LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies);
     for (Map.Entry<LayerType, List<Path>> entry : layerMap.entrySet()) {
       for (Path file : Preconditions.checkNotNull(entry.getValue())) {
-        // Handle duplicates by appending filesize to the end of the file. This renaming logic
-        // must be in sync with the code that does the same in the other place. See
+        // Handle duplicates by appending a short content hash to the end of the file. This renaming
+        // logic must be in sync with the code that does the same in the other place. See
         // https://github.com/GoogleContainerTools/jib/issues/3331
         String jarName = file.getFileName().toString();
         if (duplicates.contains(jarName)) {
-          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(file)) + ".jar";
+          jarName = jarName.replaceFirst("\\.jar$", "-" + computeContentHash(file)) + ".jar";
         }
         // Add dependencies to layer configuration
         addFileToLayer(
@@ -720,5 +728,26 @@ public class JavaContainerBuilder {
               Instant modificationTime = modificationTimeProvider.get(path, pathOnContainer);
               builder.addEntry(path, pathOnContainer, modificationTime);
             });
+  }
+
+  /**
+   * Computes a short, deterministic hash of a file's contents, used to disambiguate dependency JARs
+   * that share a filename. A content hash is used rather than the file size so that distinct JARs
+   * never collide, even if they happen to have the same size. The (SHA-256) digest is truncated
+   * because the full hash is unnecessarily long for a filename suffix and a short prefix is more
+   * than enough to tell apart the handful of same-named JARs in a single build.
+   *
+   * @param file the file to hash
+   * @return the first {@value #DUPLICATE_JAR_HASH_LENGTH} hexadecimal characters of the file's
+   *     SHA-256 content digest
+   * @throws IOException if reading the file fails
+   */
+  private static String computeContentHash(Path file) throws IOException {
+    try (InputStream inputStream = Files.newInputStream(file)) {
+      return Digests.computeDigest(inputStream)
+          .getDigest()
+          .getHash()
+          .substring(0, DUPLICATE_JAR_HASH_LENGTH);
+    }
   }
 }

@@ -437,18 +437,19 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint_expandClasspathDependencies_sizeAddedForDuplicateJars()
+  public void testComputeEntrypoint_expandClasspathDependencies_contentHashAddedForDuplicateJars()
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    Path libFoo13 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
-    Path libFoo45 = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
-    Files.write(libFoo13, new byte[13]);
-    Files.write(libFoo45, new byte[45]);
+    Path libFooA = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
+    Path libFooB = temporaryFolder.newFolder().toPath().resolve("foo-1.jar");
+    Files.write(libFooA, new byte[13]);
+    Files.write(libFooB, new byte[45]);
 
     when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
     when(projectProperties.getDependencies())
-        .thenReturn(Arrays.asList(libFoo13, Paths.get("/home/libs/bar-2.jar"), libFoo45));
+        .thenReturn(Arrays.asList(libFooA, Paths.get("/home/libs/bar-2.jar"), libFooB));
 
+    // SHA-256 prefixes of 13 and 45 zero bytes, respectively.
     assertThat(
             PluginConfigurationProcessor.computeEntrypoint(
                 rawConfiguration, projectProperties, jibContainerBuilder))
@@ -456,7 +457,8 @@ public class PluginConfigurationProcessorTest {
             "java",
             "-cp",
             "/app/resources:/app/classes:"
-                + "/app/libs/foo-1-13.jar:/app/libs/bar-2.jar:/app/libs/foo-1-45.jar",
+                + "/app/libs/foo-1-dd46c3eebb18.jar:/app/libs/bar-2.jar:"
+                + "/app/libs/foo-1-8a1020634191.jar",
             "java.lang.Object")
         .inOrder();
   }
