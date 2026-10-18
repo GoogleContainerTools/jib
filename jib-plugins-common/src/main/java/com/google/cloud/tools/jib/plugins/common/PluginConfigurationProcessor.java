@@ -55,6 +55,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
@@ -420,7 +424,8 @@ public class PluginConfigurationProcessor {
 
     // Create and configure JibContainerBuilder
     ModificationTimeProvider modificationTimeProvider =
-        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
+        createModificationTimeProvider(
+            projectProperties, rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =
         getJavaContainerBuilderWithBaseImage(
                 rawConfiguration, projectProperties, inferredAuthProvider)
@@ -901,9 +906,11 @@ public class PluginConfigurationProcessor {
    * Creates a modification time provider based on the config value. The value can be:
    *
    * <ol>
+   *   <li>{@code EPOCH} epoch time
    *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
    *       EPOCH + 1 second
-   *   <li>date in ISO 8601 format
+   *   <li>{@code USE_CURRENT_TIMESTAMP} for current time
+   *   <li>date in ISO 8601 or yyyyMMddHHmmss or {@code $value{$pattern}} format
    * </ol>
    *
    * @param modificationTime modification time config value
@@ -911,17 +918,29 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
   @VisibleForTesting
-  static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
+  static ModificationTimeProvider createModificationTimeProvider(
+      ProjectProperties projectProperties, String modificationTime)
       throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
+        case "EPOCH":
+          return (ignored1, ignored2) -> Instant.EPOCH;
+
         case "EPOCH_PLUS_SECOND":
           Instant epochPlusSecond = Instant.ofEpochSecond(1);
           return (ignored1, ignored2) -> epochPlusSecond;
 
+        case "USE_CURRENT_TIMESTAMP":
+          final Instant now = Instant.now();
+          if (projectProperties != null) {
+            projectProperties.log(
+                LogEvent.debug(
+                    "Setting image creation time to current time; your image may not be reproducible."));
+          }
+          return (ignored1, ignored2) -> now;
+
         default:
-          Instant timestamp =
-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
+          final Instant timestamp = parseInstant(modificationTime);
           return (ignored1, ignored2) -> timestamp;
       }
 
@@ -935,8 +954,9 @@ public class PluginConfigurationProcessor {
    *
    * <ol>
    *   <li>{@code EPOCH} to return epoch
+   *   <li>{@code EPOCH_PLUS_SECOND} to return epoch+1s
    *   <li>{@code USE_CURRENT_TIMESTAMP} to return the current time
-   *   <li>date in ISO 8601 format
+   *   <li>date in ISO 8601 or yyyyMMddHHmmss or {@code $value{$pattern}} format
    * </ol>
    *
    * @param configuredCreationTime the config value
@@ -952,6 +972,9 @@ public class PluginConfigurationProcessor {
         case "EPOCH":
           return Instant.EPOCH;
 
+        case "EPOCH_PLUS_SECOND":
+          return Instant.ofEpochSecond(1);
+
         case "USE_CURRENT_TIMESTAMP":
           projectProperties.log(
               LogEvent.debug(
@@ -959,19 +982,54 @@ public class PluginConfigurationProcessor {
           return Instant.now();
 
         default:
-          DateTimeFormatter formatter =
-              new DateTimeFormatterBuilder()
-                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
-                  // add ability to parse with no ":" in tz
-                  .optionalStart()
-                  .appendOffset("+HHmm", "+0000")
-                  .optionalEnd()
-                  .toFormatter();
-          return formatter.parse(configuredCreationTime, Instant::from);
+          return parseInstant(configuredCreationTime);
       }
     } catch (DateTimeParseException ex) {
       throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
     }
+  }
+
+  private static Instant parseInstant(final String dateTime) {
+    if (dateTime.contains("T")) {
+      return new DateTimeFormatterBuilder()
+          .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+          // add ability to parse with no ":" in tz
+          .optionalStart()
+          .appendOffset("+HHmm", "+0000")
+          .optionalEnd()
+          .toFormatter()
+          .parse(dateTime, Instant::from);
+    }
+
+    if (dateTime.length() == 14) { // common format to get a monotonic value serie of dates
+      return DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+          .parse(dateTime, LocalDateTime::from)
+          .toInstant(ZoneOffset.UTC);
+    }
+
+    final int formatStart = dateTime.indexOf('{');
+    if (formatStart > 0) {
+      final int formatEnd = dateTime.indexOf('}', formatStart);
+      if (formatEnd > 0) {
+        final String format = dateTime.substring(formatStart + 1, formatEnd);
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+        final String value = dateTime.substring(0, formatStart);
+        try {
+          return formatter.parse(value, Instant::from);
+        } catch (final DateTimeParseException dtpe) {
+          try {
+            return formatter.parse(value, LocalDateTime::from).toInstant(ZoneOffset.UTC);
+          } catch (final DateTimeParseException dtpe2) {
+            return formatter
+                .parse(value, LocalDate::from)
+                .atTime(LocalTime.MIN)
+                .toInstant(ZoneOffset.UTC);
+          }
+        }
+      }
+    }
+    throw new DateTimeParseException(
+        "unknown DateTimeFormatter pattern for '" + dateTime + "'", dateTime, -1);
   }
 
   // TODO: find a way to reduce the number of arguments.
