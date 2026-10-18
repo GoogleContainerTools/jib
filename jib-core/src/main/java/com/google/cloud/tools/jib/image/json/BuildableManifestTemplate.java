@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
@@ -40,6 +41,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
    * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI
    *     Content Descriptors</a>
    */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   class ContentDescriptorTemplate implements JsonTemplate {
 
     @SuppressWarnings("unused")
