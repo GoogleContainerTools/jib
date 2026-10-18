@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -77,5 +78,86 @@ public class OciManifestTemplateTest {
         manifestJson.getLayers().get(0).getDigest());
 
     Assert.assertEquals(1000_000, manifestJson.getLayers().get(0).getSize());
+  }
+
+  @Test
+  public void testAnnotations_addAndGet() {
+    OciManifestTemplate manifest = new OciManifestTemplate();
+    Assert.assertNull(manifest.getAnnotations());
+
+    manifest.addAnnotation("org.opencontainers.image.base.name", "alpine:3.18");
+    manifest.addAnnotation(
+        "org.opencontainers.image.base.digest",
+        "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
+
+    Map<String, String> annotations = manifest.getAnnotations();
+    Assert.assertNotNull(annotations);
+    Assert.assertEquals(2, annotations.size());
+    Assert.assertEquals("alpine:3.18", annotations.get("org.opencontainers.image.base.name"));
+    Assert.assertEquals(
+        "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        annotations.get("org.opencontainers.image.base.digest"));
+  }
+
+  @Test
+  public void testAnnotations_serialization() throws DigestException, IOException {
+    OciManifestTemplate manifest = new OciManifestTemplate();
+    manifest.setContainerConfiguration(
+        1000,
+        DescriptorDigest.fromDigest(
+            "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"));
+    manifest.addLayer(
+        1000_000,
+        DescriptorDigest.fromHash(
+            "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
+    manifest.addAnnotation("org.opencontainers.image.base.name", "alpine:3.18");
+    manifest.addAnnotation(
+        "org.opencontainers.image.base.digest",
+        "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+
+    String json = JsonTemplateMapper.toUtf8String(manifest);
+    Assert.assertTrue(json.contains("\"annotations\""));
+    Assert.assertTrue(json.contains("\"org.opencontainers.image.base.name\":\"alpine:3.18\""));
+    Assert.assertTrue(
+        json.contains(
+            "\"org.opencontainers.image.base.digest\":"
+                + "\"sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\""));
+  }
+
+  @Test
+  public void testAnnotations_deserialization() throws IOException {
+    String json =
+        "{\"schemaVersion\":2,"
+            + "\"mediaType\":\"application/vnd.oci.image.manifest.v1+json\","
+            + "\"config\":{\"mediaType\":\"application/vnd.oci.image.config.v1+json\","
+            + "\"digest\":\"sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad\","
+            + "\"size\":1000},"
+            + "\"layers\":[],"
+            + "\"annotations\":{"
+            + "\"org.opencontainers.image.base.name\":\"alpine:3.18\","
+            + "\"org.opencontainers.image.base.digest\":\"sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\"}}";
+
+    OciManifestTemplate manifest = JsonTemplateMapper.readJson(json, OciManifestTemplate.class);
+
+    Map<String, String> annotations = manifest.getAnnotations();
+    Assert.assertNotNull(annotations);
+    Assert.assertEquals("alpine:3.18", annotations.get("org.opencontainers.image.base.name"));
+    Assert.assertEquals(
+        "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+        annotations.get("org.opencontainers.image.base.digest"));
+  }
+
+  @Test
+  public void testAnnotations_getReturnsImmutableCopy() {
+    OciManifestTemplate manifest = new OciManifestTemplate();
+    manifest.addAnnotation("key", "value");
+
+    Map<String, String> annotations = manifest.getAnnotations();
+    try {
+      annotations.put("another", "value");
+      Assert.fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+      // expected
+    }
   }
 }
