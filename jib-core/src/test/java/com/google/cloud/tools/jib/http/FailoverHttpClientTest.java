@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.http;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -27,10 +28,12 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.common.io.ByteStreams;
 import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -444,6 +447,51 @@ public class FailoverHttpClientTest {
       assertThat(events)
           .containsExactly(
               LogEvent.warn("GET http://localhost:" + port + " failed and will be retried"));
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  public void testRetries_onHttp500() throws IOException {
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 1);
+    AtomicBoolean failed = new AtomicBoolean();
+    server
+        .createContext("/")
+        .setHandler(
+            exchange -> {
+              final byte[] payload;
+              try (InputStream in = exchange.getRequestBody()) {
+                payload = ByteStreams.toByteArray(in);
+              }
+              final String payloadString = new String(payload, UTF_8);
+              exchange.sendResponseHeaders(
+                  failed.compareAndSet(false, true) || !"test payload".endsWith(payloadString)
+                      ? 500
+                      : 200,
+                  -1);
+            });
+    try {
+      server.start();
+      int port = server.getAddress().getPort();
+      List<LogEvent> events = new ArrayList<>();
+      try (Response response =
+          new FailoverHttpClient(true, true, events::add)
+              .post(
+                  new URL("http://localhost:" + port),
+                  Request.builder()
+                      .setBody(
+                          new BlobHttpContent(
+                              Blobs.from(new ByteArrayInputStream("test payload".getBytes(UTF_8))),
+                              "application/octect-stream"))
+                      .build())) {
+        int returnCode = response.getStatusCode();
+        assertThat(returnCode).isEqualTo(200);
+        assertThat(failed.get()).isTrue();
+        assertThat(events)
+            .containsExactly(
+                LogEvent.warn("POST http://localhost:" + port + " failed and will be retried"));
+      }
     } finally {
       server.stop(0);
     }
