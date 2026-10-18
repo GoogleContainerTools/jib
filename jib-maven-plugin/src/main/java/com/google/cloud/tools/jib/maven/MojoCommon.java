@@ -53,6 +53,7 @@ public class MojoCommon {
   static Future<Optional<String>> newUpdateChecker(
       ProjectProperties projectProperties, GlobalConfig globalConfig, Log logger) {
     if (projectProperties.isOffline()
+        || projectProperties.isDisableUpdateCheck()
         || !logger.isInfoEnabled()
         || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
