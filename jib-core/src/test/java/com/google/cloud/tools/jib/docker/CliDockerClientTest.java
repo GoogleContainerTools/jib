@@ -403,6 +403,17 @@ public class CliDockerClientTest {
   }
 
   @Test
+  public void testPodmanImageDetails_Id() throws DigestException, IOException {
+    // Support Podman "Id" without the "sha256:" prefix
+    String json = "{\"Id\":\"e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\"}\n";
+    DockerImageDetails results = JsonTemplateMapper.readJson(json, DockerImageDetails.class);
+    Assert.assertEquals(
+        DescriptorDigest.fromHash(
+            "e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd"),
+        results.getImageId());
+  }
+
+  @Test
   public void testDockerImageDetails_unknownProperties() throws IOException, DigestException {
     String json =
         "{\"Unknown\": [ ], \"Structure\": [ { \"Test\": 0 } ], \"Size\": 1234,"
@@ -431,7 +442,7 @@ public class CliDockerClientTest {
       details.getImageId();
       Assert.fail();
     } catch (DigestException ex) {
-      Assert.assertEquals("Invalid digest: ", ex.getMessage());
+      Assert.assertEquals("Invalid digest or hash: ", ex.getMessage());
     }
   }
 

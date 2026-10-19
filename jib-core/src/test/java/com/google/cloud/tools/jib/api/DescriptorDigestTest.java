@@ -83,6 +83,51 @@ public class DescriptorDigestTest {
   }
 
   @Test
+  public void testCreateFromDigestOrHash_passForDigest() throws DigestException {
+    String goodHash = createGoodHash('a');
+    String goodDigest = "sha256:" + goodHash;
+
+    DescriptorDigest descriptorDigest = DescriptorDigest.fromDigestOrHash(goodDigest);
+
+    Assert.assertEquals(goodHash, descriptorDigest.getHash());
+    Assert.assertEquals(goodDigest, descriptorDigest.toString());
+  }
+
+  @Test
+  public void testCreateFromDigestOrHash_passForHash() throws DigestException {
+    String goodHash = createGoodHash('a');
+
+    DescriptorDigest descriptorDigest = DescriptorDigest.fromDigestOrHash(goodHash);
+
+    Assert.assertEquals(goodHash, descriptorDigest.getHash());
+    Assert.assertEquals("sha256:" + goodHash, descriptorDigest.toString());
+  }
+
+  @Test
+  public void testCreateFromDigestOrHash_failForBadDigest() {
+    String badDigest = "sha256:not a valid digest";
+
+    try {
+      DescriptorDigest.fromDigestOrHash(badDigest);
+      Assert.fail("Invalid digest should have caused digest creation failure.");
+    } catch (DigestException ex) {
+      Assert.assertEquals("Invalid digest or hash: " + badDigest, ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testCreateFromDigestOrHash_failForBadHash() {
+    String badHash = "not a valid hash";
+
+    try {
+      DescriptorDigest.fromDigestOrHash(badHash);
+      Assert.fail("Invalid digest should have caused digest creation failure.");
+    } catch (DigestException ex) {
+      Assert.assertEquals("Invalid digest or hash: " + badHash, ex.getMessage());
+    }
+  }
+
+  @Test
   public void testUseAsMapKey() throws DigestException {
     DescriptorDigest descriptorDigestA1 = DescriptorDigest.fromHash(createGoodHash('a'));
     DescriptorDigest descriptorDigestA2 = DescriptorDigest.fromHash(createGoodHash('a'));
