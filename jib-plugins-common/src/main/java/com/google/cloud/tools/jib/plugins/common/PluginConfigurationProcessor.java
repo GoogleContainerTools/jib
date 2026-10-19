@@ -167,6 +167,7 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageTagDigest(rawConfiguration.getImageTagDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
@@ -235,6 +236,7 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageTagDigest(rawConfiguration.getImageTagDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
@@ -320,6 +322,7 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageTagDigest(rawConfiguration.getImageTagDigestOutputPath())
         .writeImageId(rawConfiguration.getImageIdOutputPath())
         .writeImageJson(rawConfiguration.getImageJsonOutputPath());
   }
