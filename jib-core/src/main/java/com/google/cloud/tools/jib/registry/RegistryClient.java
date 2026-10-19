@@ -237,7 +237,7 @@ public class RegistryClient {
 
   // mutable
   private final AtomicReference<Authorization> authorization = new AtomicReference<>();
-  private boolean readOnlyBearerAuth;
+  private volatile boolean readOnlyBearerAuth;
   private final AtomicReference<RegistryAuthenticator> initialBearerAuthenticator =
       new AtomicReference<>();
 
