@@ -149,7 +149,8 @@ public class JibContainerBuilderTest {
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(executorService)
             .addEventHandler(mockJibEventConsumer)
-            .setAlwaysCacheBaseImage(false);
+            .setAlwaysCacheBaseImage(false)
+            .setEnablePlatformTags(true);
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image"))
@@ -220,6 +221,8 @@ public class JibContainerBuilderTest {
         ImmutableSet.of("latest", "tag1", "tag2"), buildContext.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildContext.getToolName());
     Assert.assertFalse(buildContext.getAlwaysCacheBaseImage());
+
+    Assert.assertTrue(buildContext.getEnablePlatformTags());
   }
 
   @Test

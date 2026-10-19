@@ -66,7 +66,8 @@ public class ContainerizerTest {
         .setBaseImageLayersCache(Paths.get("base/image/layers"))
         .setApplicationLayersCache(Paths.get("application/layers"))
         .setAllowInsecureRegistries(true)
-        .setToolName("tool");
+        .setToolName("tool")
+        .setEnablePlatformTags(true);
 
     Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), containerizer.getAdditionalTags());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
@@ -77,6 +78,7 @@ public class ContainerizerTest {
         Paths.get("application/layers"), containerizer.getApplicationLayersCacheDirectory());
     Assert.assertTrue(containerizer.getAllowInsecureRegistries());
     Assert.assertEquals("tool", containerizer.getToolName());
+    Assert.assertTrue(containerizer.getEnablePlatformTags());
   }
 
   @Test
