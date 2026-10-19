@@ -35,14 +35,13 @@ import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.GlobalConfig;
 import com.google.cloud.tools.jib.plugins.common.globalconfig.InvalidGlobalConfigException;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
@@ -57,7 +56,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
-  @Nullable private JibExtension jibExtension;
+  private JibExtension jibExtension;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -66,7 +65,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    * @return the {@link JibExtension}.
    */
   @Nested
-  @Nullable
   public JibExtension getJib() {
     return jibExtension;
   }
@@ -78,7 +76,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @Option(option = "image", description = "The image reference for the target image")
   public void setTargetImage(String targetImage) {
-    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
+    jibExtension.getTo().setImage(targetImage);
   }
 
   /**
@@ -90,7 +88,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
-        Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths().stream()
+        jibExtension.getExtraDirectories().getPaths().stream()
             .map(ExtraDirectoryParameters::getFrom)
             .collect(Collectors.toList());
     return GradleProjectProperties.getInputFiles(
@@ -104,7 +102,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return Preconditions.checkNotNull(jibExtension).getOutputPaths().getTarPath().toString();
+    return jibExtension.getOutputPaths().getTarPath().toString();
+  }
+
+  @Inject
+  public BuildTarTask(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
   }
 
   /**
@@ -120,8 +123,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   public void buildTar()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidGlobalConfigException {
-    // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
     TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
