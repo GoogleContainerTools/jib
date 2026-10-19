@@ -54,4 +54,9 @@ public class Platform {
   public int hashCode() {
     return Objects.hash(architecture, os);
   }
+
+  @Override
+  public String toString() {
+    return architecture + "/" + os;
+  }
 }
