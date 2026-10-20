@@ -50,12 +50,14 @@ public class LayerEntriesSelectorTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private ImmutableList<FileEntry> outOfOrderLayerEntries;
   private ImmutableList<FileEntry> inOrderLayerEntries;
+  private boolean retainSymlinks = false;
+
 
   private static ImmutableList<LayerEntryTemplate> toLayerEntryTemplates(
-      ImmutableList<FileEntry> layerEntries) throws IOException {
+      ImmutableList<FileEntry> layerEntries, boolean retainSymlinks) throws IOException {
     ImmutableList.Builder<LayerEntryTemplate> builder = ImmutableList.builder();
     for (FileEntry layerEntry : layerEntries) {
-      builder.add(new LayerEntryTemplate(layerEntry));
+      builder.add(new LayerEntryTemplate(layerEntry, retainSymlinks));
     }
     return builder.build();
   }
@@ -105,30 +107,30 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testLayerEntryTemplate_compareTo() throws IOException {
     Assert.assertEquals(
-        toLayerEntryTemplates(inOrderLayerEntries),
-        ImmutableList.sortedCopyOf(toLayerEntryTemplates(outOfOrderLayerEntries)));
+        toLayerEntryTemplates(inOrderLayerEntries, retainSymlinks),
+        ImmutableList.sortedCopyOf(toLayerEntryTemplates(outOfOrderLayerEntries, retainSymlinks)));
   }
 
   @Test
   public void testToSortedJsonTemplates() throws IOException {
     Assert.assertEquals(
-        toLayerEntryTemplates(inOrderLayerEntries),
-        LayerEntriesSelector.toSortedJsonTemplates(outOfOrderLayerEntries));
+        toLayerEntryTemplates(inOrderLayerEntries, retainSymlinks),
+        LayerEntriesSelector.toSortedJsonTemplates(outOfOrderLayerEntries, retainSymlinks));
   }
 
   @Test
   public void testGenerateSelector_empty() throws IOException {
     DescriptorDigest expectedSelector = Digests.computeJsonDigest(ImmutableList.of());
     Assert.assertEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of()));
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(), retainSymlinks));
   }
 
   @Test
   public void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
-        Digests.computeJsonDigest(toLayerEntryTemplates(inOrderLayerEntries));
+        Digests.computeJsonDigest(toLayerEntryTemplates(inOrderLayerEntries, retainSymlinks));
     Assert.assertEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(outOfOrderLayerEntries));
+        expectedSelector, LayerEntriesSelector.generateSelector(outOfOrderLayerEntries, retainSymlinks));
   }
 
   @Test
@@ -137,17 +139,17 @@ public class LayerEntriesSelectorTest {
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     FileEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry), retainSymlinks);
 
     // Verify that changing source modification time generates a different selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.ofEpochSecond(1)));
     Assert.assertNotEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry), retainSymlinks));
 
     // Verify that changing source modification time back generates same selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     Assert.assertEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry), retainSymlinks));
   }
 
   @Test
@@ -161,8 +163,8 @@ public class LayerEntriesSelectorTest {
 
     // Verify that different target modification times generate different selectors
     Assert.assertNotEquals(
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1)),
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2)));
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1), retainSymlinks),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2), retainSymlinks));
   }
 
   @Test
@@ -184,8 +186,8 @@ public class LayerEntriesSelectorTest {
 
     // Verify that changing permissions generates a different selector
     Assert.assertNotEquals(
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111), retainSymlinks),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222), retainSymlinks));
   }
 
   @Test
@@ -209,7 +211,7 @@ public class LayerEntriesSelectorTest {
 
     // Verify that changing ownership generates a different selector
     Assert.assertNotEquals(
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111), retainSymlinks),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222), retainSymlinks));
   }
 }
