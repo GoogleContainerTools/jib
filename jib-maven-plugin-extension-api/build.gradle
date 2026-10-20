@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-  api dependencyStrings.BUILD_PLAN
+  api project(':jib-build-plan')
   api dependencyStrings.EXTENSION_COMMON
   api dependencyStrings.MAVEN_CORE
 }
