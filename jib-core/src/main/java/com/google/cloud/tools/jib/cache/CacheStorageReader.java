@@ -172,6 +172,8 @@ class CacheStorageReader {
               .setLayerSize(Files.size(layerFile))
               .setLayerBlob(Blobs.from(layerFile))
               .setLayerDiffId(cacheStorageFiles.getDigestFromFilename(layerFile))
+              .setCompressionAlgorithm(
+                  CompressionAlgorithmHelper.detectCompressionAlgorithm(layerFile))
               .build());
     }
   }
@@ -210,6 +212,8 @@ class CacheStorageReader {
               .setLayerSize(Files.size(layerFile))
               .setLayerBlob(Blobs.from(layerFile))
               .setLayerDiffId(diffId)
+              .setCompressionAlgorithm(
+                  CompressionAlgorithmHelper.detectCompressionAlgorithm(layerFile))
               .build());
     }
   }

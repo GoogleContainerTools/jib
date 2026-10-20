@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.Layer;
@@ -91,5 +92,10 @@ class PreparedLayer implements Layer {
   @Override
   public DescriptorDigest getDiffId() {
     return layer.getDiffId();
+  }
+
+  @Override
+  public CompressionAlgorithm getCompressionAlgorithm() {
+    return layer.getCompressionAlgorithm();
   }
 }

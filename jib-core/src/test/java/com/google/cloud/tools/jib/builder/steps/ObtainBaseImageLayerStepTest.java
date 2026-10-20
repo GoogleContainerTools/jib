@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
@@ -69,8 +70,11 @@ public class ObtainBaseImageLayerStepTest {
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
     DescriptorDigest diffId = Mockito.mock(DescriptorDigest.class);
-    existingLayer = new ReferenceLayer(new BlobDescriptor(existingLayerDigest), diffId);
-    freshLayer = new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId);
+    existingLayer =
+        new ReferenceLayer(
+            new BlobDescriptor(existingLayerDigest), diffId, CompressionAlgorithm.GZIP);
+    freshLayer =
+        new ReferenceLayer(new BlobDescriptor(freshLayerDigest), diffId, CompressionAlgorithm.GZIP);
 
     Mockito.when(registryClient.checkBlob(existingLayerDigest))
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
@@ -490,6 +491,18 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the compression algorithm of the built container image layers.
+   *
+   * @param compressionAlgorithm the {@link CompressionAlgorithm}
+   * @return this
+   */
+  public JibContainerBuilder setCompression(CompressionAlgorithm compressionAlgorithm) {
+    containerBuildPlanBuilder.setCompression(compressionAlgorithm);
+    buildContextBuilder.setTargetCompression(compressionAlgorithm);
+    return this;
+  }
+
+  /**
    * Sets the container image creation time. The default is {@link Instant#EPOCH}.
    *
    * @param creationTime the container image creation time
@@ -707,6 +720,7 @@ public class JibContainerBuilder {
 
     buildContextBuilder
         .setTargetFormat(buildPlan.getFormat())
+        .setTargetCompression(buildPlan.getCompressionAlgorithm())
         .setBaseImageConfiguration(baseImageConfiguration)
         .setLayerConfigurations(layerConfigurations);
     return this;
