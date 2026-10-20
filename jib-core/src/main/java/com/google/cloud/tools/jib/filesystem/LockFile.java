@@ -31,7 +31,19 @@ import java.util.concurrent.locks.ReentrantLock;
 /** Creates and deletes lock files. */
 public class LockFile implements Closeable {
 
-  private static final ConcurrentHashMap<Path, Lock> lockMap = new ConcurrentHashMap<>();
+  // In Gradle composite builds with independent buildSrc directories, each included build loads
+  // jib-core in its own classloader. A normal static field creates separate lockMap instances per
+  // classloader, failing to prevent concurrent FileChannel.lock() calls on the same file and
+  // causing OverlappingFileLockException (#3347). This is admittedly a hack, but there is no
+  // clean way to share state across classloaders in the same JVM. System.getProperties() returns
+  // the same Hashtable regardless of classloader, so it serves as a JVM-global namespace.
+  // The map's key/value types (Path, Lock) are bootstrap-loaded, so they're safe to cast.
+  @SuppressWarnings("unchecked")
+  private static final ConcurrentHashMap<Path, Lock> lockMap =
+      (ConcurrentHashMap<Path, Lock>)
+          System.getProperties()
+              .computeIfAbsent(
+                  "jib.lockFile.lockMap", key -> new ConcurrentHashMap<Path, Lock>());
 
   private final Path lockFilePath;
   private final FileLock fileLock;
