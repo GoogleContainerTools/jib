@@ -30,6 +30,9 @@ public class Request {
   /** The HTTP request body. */
   @Nullable private final HttpContent body;
 
+  /** Whether the HTTP request body carries credentials. */
+  private final boolean credentialBody;
+
   /** HTTP connection and read timeout. */
   @Nullable private final Integer httpTimeout;
 
@@ -37,6 +40,7 @@ public class Request {
 
     private final HttpHeaders headers = new HttpHeaders().setAccept("*/*");
     @Nullable private HttpContent body;
+    private boolean credentialBody;
     @Nullable private Integer httpTimeout;
 
     public Request build() {
@@ -96,6 +100,21 @@ public class Request {
      */
     public Builder setBody(@Nullable HttpContent httpContent) {
       this.body = httpContent;
+      this.credentialBody = false;
+      return this;
+    }
+
+    /**
+     * Sets a body that carries credentials. {@link FailoverHttpClient} sends such a request over
+     * plain HTTP only if sending credentials over HTTP is enabled, and otherwise throws {@link
+     * javax.net.ssl.SSLException}.
+     *
+     * @param httpContent the body content
+     * @return this
+     */
+    public Builder setCredentialBody(HttpContent httpContent) {
+      this.body = httpContent;
+      this.credentialBody = true;
       return this;
     }
   }
@@ -107,6 +126,7 @@ public class Request {
   private Request(Builder builder) {
     this.headers = builder.headers;
     this.body = builder.body;
+    this.credentialBody = builder.credentialBody;
     this.httpTimeout = builder.httpTimeout;
   }
 
@@ -117,6 +137,10 @@ public class Request {
   @Nullable
   HttpContent getHttpContent() {
     return body;
+  }
+
+  boolean hasCredentialBody() {
+    return credentialBody;
   }
 
   @Nullable

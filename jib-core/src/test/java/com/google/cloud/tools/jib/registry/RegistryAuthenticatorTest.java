@@ -34,6 +34,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -312,6 +313,29 @@ public class RegistryAuthenticatorTest {
           "Required credentials for someserver/someimage were not sent because the connection was "
               + "over HTTP",
           ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testAuthenticate_oauth2RefreshTokenNotSentOverHttp()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryAuthenticationFailedException {
+    try (TestWebServer server = new TestWebServer(false)) {
+      RegistryAuthenticator authenticator =
+          RegistryAuthenticator.fromAuthenticationMethod(
+                  "Bearer realm=\"" + server.getEndpoint() + "\"",
+                  registryEndpointRequestProperties,
+                  "user-agent",
+                  new FailoverHttpClient(true, false, ignored -> {}))
+              .get();
+
+      RegistryAuthenticationFailedException exception =
+          Assert.assertThrows(
+              RegistryAuthenticationFailedException.class,
+              () -> authenticator.authenticatePull(Credential.from("<token>", "oauth2_token")));
+      assertThat(exception).hasCauseThat().isInstanceOf(SSLException.class);
+      assertThat(exception).hasMessageThat().contains("sendCredentialsOverHttp");
+      assertThat(server.getInputRead()).isEmpty();
     }
   }
 
