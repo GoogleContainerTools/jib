@@ -325,6 +325,12 @@ public class FailoverHttpClient {
       boolean retryOnIoException) // See https://github.com/GoogleContainerTools/jib/issues/3424
       throws IOException {
     boolean clearAuthorization = !isHttpsProtocol(url) && !sendAuthorizationOverHttp;
+    if (clearAuthorization && request.hasCredentialBody()) {
+      throw new SSLException(
+          "credentials not sent over insecure HTTP connection: "
+              + url
+              + "; use HTTPS or set the 'sendCredentialsOverHttp' system property to true");
+    }
 
     HttpHeaders requestHeaders =
         clearAuthorization

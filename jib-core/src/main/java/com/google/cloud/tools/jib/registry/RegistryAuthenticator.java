@@ -272,7 +272,7 @@ public class RegistryAuthenticator {
 
       if (isOAuth2Auth(credential)) {
         String parameters = getAuthRequestParameters(credential, repositoryScopes);
-        requestBuilder.setBody(
+        requestBuilder.setCredentialBody(
             new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
         requestBuilder.setAuthorization(
