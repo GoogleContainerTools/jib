@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -238,6 +239,51 @@ public class MainClassFinderTest {
     Path rootDirectory =
         Paths.get(Resources.getResource("core/class-finder-tests/java25-flexible-main").toURI());
     Path classFile = rootDirectory.resolve("PrivateMain.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_NOT_FOUND, mainClassFinderResult.getType());
+  }
+
+  @Test
+  public void testMainClass_java25ScalaObject() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(
+            Resources.getResource("core/class-finder-tests/java25-instance-main-requirements")
+                .toURI());
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(
+            Arrays.asList(
+                rootDirectory.resolve("ScalaObjectMain.class"),
+                rootDirectory.resolve("ScalaObjectMain$.class")),
+            logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertEquals("ScalaObjectMain", mainClassFinderResult.getFoundMainClass());
+  }
+
+  @Test
+  public void testMainClass_java25InstanceMainWithPrivateConstructorNotAllowed()
+      throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(
+            Resources.getResource("core/class-finder-tests/java25-instance-main-requirements")
+                .toURI());
+    Path classFile = rootDirectory.resolve("PrivateConstructorInstanceMain.class");
+    MainClassFinder.Result mainClassFinderResult =
+        MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
+    Assert.assertSame(
+        MainClassFinder.Result.Type.MAIN_CLASS_NOT_FOUND, mainClassFinderResult.getType());
+  }
+
+  @Test
+  public void testMainClass_java25InstanceMainInAbstractClassNotAllowed()
+      throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(
+            Resources.getResource("core/class-finder-tests/java25-instance-main-requirements")
+                .toURI());
+    Path classFile = rootDirectory.resolve("AbstractInstanceMain.class");
     MainClassFinder.Result mainClassFinderResult =
         MainClassFinder.find(java.util.Collections.singletonList(classFile), logEventConsumer);
     Assert.assertSame(
