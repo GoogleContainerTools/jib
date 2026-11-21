@@ -40,7 +40,7 @@ import org.gradle.api.tasks.Optional;
 public class ContainerParameters {
 
   private final ListProperty<String> jvmFlags;
-  private Map<String, String> environment = Collections.emptyMap();
+  private MapProperty<String, String> environment;
   private ListProperty<String> entrypoint;
   private List<String> extraClasspath = Collections.emptyList();
   private boolean expandClasspathDependencies;
@@ -64,6 +64,7 @@ public class ContainerParameters {
     mainClass = objectFactory.property(String.class);
     jvmFlags = objectFactory.listProperty(String.class);
     entrypoint = objectFactory.listProperty(String.class);
+    environment = objectFactory.mapProperty(String.class, String.class).empty();
   }
 
   @Input
@@ -109,16 +110,16 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public Map<String, String> getEnvironment() {
-    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
+  public MapProperty<String, String> getEnvironment() {
+    String environmentProperty = System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT);
+    if (environmentProperty != null) {
+      Map<String, String> parsedEnvironment =
+              ConfigurationPropertyValidator.parseMapProperty(environmentProperty);
+      if (!parsedEnvironment.equals(environment.get())) {
+        environment.set(parsedEnvironment);
+      }
     }
     return environment;
-  }
-
-  public void setEnvironment(Map<String, String> environment) {
-    this.environment = environment;
   }
 
   @Input
