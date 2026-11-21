@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- fix: do not send OAuth2 refresh tokens over plain HTTP unless `sendCredentialsOverHttp` is set (`-DsendCredentialsOverHttp=true`)
 
 ## 0.28.2
 

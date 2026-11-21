@@ -330,6 +330,40 @@ public class FailoverHttpClientTest {
   }
 
   @Test
+  public void testPost_doNotSendCredentialBodyOverHttp() throws IOException {
+    FailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Request request =
+        Request.builder()
+            .setCredentialBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
+            .build();
+
+    Mockito.when(mockHttpRequest.execute()).thenThrow(new ConnectException());
+
+    SSLException exception =
+        Assert.assertThrows(
+            SSLException.class,
+            () -> insecureHttpClient.post(new URL("https://insecure"), request));
+    assertThat(exception).hasMessageThat().contains("sendCredentialsOverHttp");
+
+    verifyCapturedUrls("https://insecure");
+  }
+
+  @Test
+  public void testPost_sendCredentialBodyOverHttp() throws IOException {
+    FailoverHttpClient insecureHttpClient = newHttpClient(true, true);
+    Request request =
+        Request.builder()
+            .setCredentialBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
+            .build();
+
+    try (Response response = insecureHttpClient.post(new URL("http://plain.http"), request)) {
+      // intentionally empty
+    }
+
+    verifyCapturedUrls("http://plain.http");
+  }
+
+  @Test
   public void testShutDown() throws IOException {
     FailoverHttpClient secureHttpClient = newHttpClient(false, false);
 
