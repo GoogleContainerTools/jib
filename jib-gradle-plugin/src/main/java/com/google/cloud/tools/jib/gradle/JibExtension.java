@@ -110,10 +110,10 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
+    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
-    outputPaths = objectFactory.newInstance(OutputPathsParameters.class, project);
-    skaffold = objectFactory.newInstance(SkaffoldParameters.class, project);
+    outputPaths = objectFactory.newInstance(OutputPathsParameters.class);
+    skaffold = objectFactory.newInstance(SkaffoldParameters.class);
 
     pluginExtensions = objectFactory.listProperty(ExtensionParameters.class).empty();
     extensionParametersSpec =

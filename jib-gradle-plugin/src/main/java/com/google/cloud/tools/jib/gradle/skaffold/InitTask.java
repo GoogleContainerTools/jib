@@ -32,7 +32,19 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class InitTask extends DefaultTask {
 
+  private final boolean parentProject;
+  private final boolean rootProject;
+  private final String projectName;
+
   @Nullable private JibExtension jibExtension;
+
+  /** Captures the project state at configuration time. */
+  public InitTask() {
+    Project project = getProject();
+    parentProject = !project.getSubprojects().isEmpty();
+    rootProject = project.equals(project.getRootProject());
+    projectName = project.getName();
+  }
 
   public InitTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
@@ -46,15 +58,14 @@ public class InitTask extends DefaultTask {
    */
   @TaskAction
   public void listModulesAndTargets() throws IOException {
-    Project project = getProject();
     // Ignore parent projects
-    if (!project.getSubprojects().isEmpty()) {
+    if (parentProject) {
       return;
     }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
-    if (!project.equals(project.getRootProject())) {
-      skaffoldInitOutput.setProject(project.getName());
+    if (!rootProject) {
+      skaffoldInitOutput.setProject(projectName);
     }
     System.out.println();
     System.out.println("BEGIN JIB JSON");

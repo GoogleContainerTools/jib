@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle.skaffold;
 import com.google.common.base.Preconditions;
 import javax.inject.Inject;
 import org.gradle.api.Action;
-import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Nested;
 
@@ -30,11 +29,9 @@ public class SkaffoldParameters {
   private final SkaffoldSyncParameters sync;
 
   @Inject
-  public SkaffoldParameters(Project project) {
-    ObjectFactory objectFactory = project.getObjects();
-
-    watch = objectFactory.newInstance(SkaffoldWatchParameters.class, project);
-    sync = objectFactory.newInstance(SkaffoldSyncParameters.class, project);
+  public SkaffoldParameters(ObjectFactory objectFactory) {
+    watch = objectFactory.newInstance(SkaffoldWatchParameters.class);
+    sync = objectFactory.newInstance(SkaffoldSyncParameters.class);
 
     Preconditions.checkNotNull(watch);
   }

@@ -22,18 +22,18 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import org.gradle.api.Project;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.tasks.Internal;
 
 /** Skaffold specific JibExtension parameters for configuring files to sync. */
 public class SkaffoldSyncParameters {
-  private final Project project;
+  private final ProjectLayout layout;
 
   private Set<Path> excludes = Collections.emptySet();
 
   @Inject
-  public SkaffoldSyncParameters(Project project) {
-    this.project = project;
+  public SkaffoldSyncParameters(ProjectLayout layout) {
+    this.layout = layout;
   }
 
   /**
@@ -48,13 +48,14 @@ public class SkaffoldSyncParameters {
 
   /**
    * Sets excludes. {@code excludes} can be any suitable object describing file paths convertible by
-   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code List<String>}).
+   * {@link org.gradle.api.Project#files} (such as {@link File}, {@code List<File>}, or {@code
+   * List<String>}).
    *
    * @param paths paths to set on excludes
    */
   public void setExcludes(Object paths) {
     this.excludes =
-        project.files(paths).getFiles().stream()
+        layout.files(paths).getFiles().stream()
             .map(File::toPath)
             .map(Path::toAbsolutePath)
             .collect(Collectors.toSet());

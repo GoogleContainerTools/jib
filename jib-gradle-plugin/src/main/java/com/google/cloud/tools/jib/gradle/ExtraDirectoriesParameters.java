@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import org.gradle.api.Action;
-import org.gradle.api.Project;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -39,18 +39,18 @@ import org.gradle.api.tasks.Internal;
 public class ExtraDirectoriesParameters {
 
   private final ObjectFactory objects;
-  private final Project project;
+  private final ProjectLayout layout;
 
   private ListProperty<ExtraDirectoryParameters> paths;
   private ExtraDirectoryParametersSpec spec;
   private MapProperty<String, String> permissions;
 
   @Inject
-  public ExtraDirectoriesParameters(ObjectFactory objects, Project project) {
+  public ExtraDirectoriesParameters(ObjectFactory objects, ProjectLayout layout) {
     this.objects = objects;
-    this.project = project;
+    this.layout = layout;
     paths = objects.listProperty(ExtraDirectoryParameters.class).empty();
-    spec = objects.newInstance(ExtraDirectoryParametersSpec.class, project, paths);
+    spec = objects.newInstance(ExtraDirectoryParametersSpec.class, paths);
     permissions = objects.mapProperty(String.class, String.class).empty();
   }
 
@@ -75,15 +75,21 @@ public class ExtraDirectoriesParameters {
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream()
-          .map(path -> new ExtraDirectoryParameters(objects, project, Paths.get(path), "/"))
+          .map(path -> new ExtraDirectoryParameters(objects, layout, Paths.get(path), "/"))
           .collect(Collectors.toList());
     }
     if (paths.get().isEmpty()) {
       return Collections.singletonList(
           new ExtraDirectoryParameters(
               objects,
-              project,
-              project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"),
+              layout,
+              layout
+                  .getProjectDirectory()
+                  .getAsFile()
+                  .toPath()
+                  .resolve("src")
+                  .resolve("main")
+                  .resolve("jib"),
               "/"));
     }
     return paths.get();
@@ -91,7 +97,8 @@ public class ExtraDirectoriesParameters {
 
   /**
    * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
-   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code List<String>}).
+   * {@link org.gradle.api.Project#files} (such as {@link File}, {@code List<File>}, or {@code
+   * List<String>}).
    *
    * @param paths paths to set.
    */
@@ -115,8 +122,8 @@ public class ExtraDirectoriesParameters {
    */
   @Nonnull
   private List<ExtraDirectoryParameters> convertToExtraDirectoryParametersList(Object obj) {
-    return project.files(obj).getFiles().stream()
-        .map(file -> new ExtraDirectoryParameters(objects, project, file.toPath(), "/"))
+    return layout.files(obj).getFiles().stream()
+        .map(file -> new ExtraDirectoryParameters(objects, layout, file.toPath(), "/"))
         .collect(Collectors.toList());
   }
 

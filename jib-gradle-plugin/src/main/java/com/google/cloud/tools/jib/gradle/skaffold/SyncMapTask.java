@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle.skaffold;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.gradle.GradleProjectData;
 import com.google.cloud.tools.jib.gradle.GradleProjectProperties;
 import com.google.cloud.tools.jib.gradle.GradleRawConfiguration;
 import com.google.cloud.tools.jib.gradle.JibExtension;
@@ -38,9 +39,18 @@ import org.gradle.api.tasks.TaskAction;
 public class SyncMapTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
+  @Nullable private GradleProjectData projectData;
 
+  /**
+   * Sets the task's {@link JibExtension} and captures the project state needed at execution time.
+   *
+   * @param jibExtension the {@link JibExtension}
+   * @return this
+   */
   public SyncMapTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    this.projectData =
+        GradleProjectData.create(getProject(), () -> jibExtension.getConfigurationName().get());
     return this;
   }
 
@@ -52,10 +62,10 @@ public class SyncMapTask extends DefaultTask {
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
-              getProject(),
+              Preconditions.checkNotNull(projectData),
+              this::getProject,
               getLogger(),
-              tempDirectoryProvider,
-              jibExtension.getConfigurationName().get());
+              tempDirectoryProvider);
 
       GradleRawConfiguration configuration = new GradleRawConfiguration(jibExtension);
 
@@ -63,7 +73,7 @@ public class SyncMapTask extends DefaultTask {
       if (projectProperties.isWarProject()) {
         throw new GradleException(
             "Skaffold sync is currently only available for 'jar' style Jib projects, but the project "
-                + getProject().getName()
+                + projectProperties.getName()
                 + " is configured to generate a 'war'");
       }
       try {
@@ -71,7 +81,7 @@ public class SyncMapTask extends DefaultTask {
             ContainerizingMode.from(jibExtension.getContainerizingMode()))) {
           throw new GradleException(
               "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of "
-                  + getProject().getName()
+                  + projectProperties.getName()
                   + " is '"
                   + jibExtension.getContainerizingMode()
                   + "'");

@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+- Jib tasks are now compatible with the Gradle configuration cache. Tasks fall back to not being cacheable when `jib.pluginExtensions` are configured, as plugin extensions may access the Gradle project at execution time.
 
 ### Changed
 

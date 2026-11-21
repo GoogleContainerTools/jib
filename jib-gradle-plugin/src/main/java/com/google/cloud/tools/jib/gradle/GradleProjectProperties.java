@@ -63,20 +63,9 @@ import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.plugins.WarPlugin;
-import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
-import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
 public class GradleProjectProperties implements ProjectProperties {
@@ -93,9 +82,6 @@ public class GradleProjectProperties implements ProjectProperties {
 
   /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'jar' task";
-
-  /** Name of the `main` {@link SourceSet} to use as source files. */
-  private static final String MAIN_SOURCE_SET_NAME = "main";
 
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
@@ -114,6 +100,28 @@ public class GradleProjectProperties implements ProjectProperties {
       Logger logger,
       TempDirectoryProvider tempDirectoryProvider,
       String configurationName) {
+    return getForProject(
+        GradleProjectData.create(project, () -> configurationName),
+        () -> project,
+        logger,
+        tempDirectoryProvider);
+  }
+
+  /**
+   * Generate an instance for a gradle project from its configuration-cache compatible state.
+   *
+   * @param projectData the state of the gradle project
+   * @param projectSupplier supplies the gradle project; only called when Jib plugin extensions are
+   *     run, as they may need the project
+   * @param logger a gradle logging instance to use for logging during the build
+   * @param tempDirectoryProvider for scratch space during the build
+   * @return a GradleProjectProperties instance to use in a jib build
+   */
+  public static GradleProjectProperties getForProject(
+      GradleProjectData projectData,
+      Supplier<Project> projectSupplier,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider) {
     Supplier<List<JibGradlePluginExtension<?>>> extensionLoader =
         () -> {
           List<JibGradlePluginExtension<?>> extensions = new ArrayList<>();
@@ -124,25 +132,19 @@ public class GradleProjectProperties implements ProjectProperties {
           return extensions;
         };
     return new GradleProjectProperties(
-        project, logger, tempDirectoryProvider, extensionLoader, configurationName);
+        projectData, projectSupplier, logger, tempDirectoryProvider, extensionLoader);
   }
 
   String getWarFilePath() {
-    TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
-    if (bootWarTask != null && bootWarTask.get().getEnabled()) {
-      return bootWarTask.get().getOutputs().getFiles().getAsPath();
-    }
-
-    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-    return Verify.verifyNotNull(warTask).get().getOutputs().getFiles().getAsPath();
+    return Verify.verifyNotNull(projectData.getWarFilePath());
   }
 
-  private static boolean isProgressFooterEnabled(Project project) {
+  private static boolean isProgressFooterEnabled(GradleProjectData projectData) {
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
 
-    switch (project.getGradle().getStartParameter().getConsoleOutput()) {
+    switch (projectData.getConsoleOutput()) {
       case Plain:
         return false;
 
@@ -157,12 +159,12 @@ public class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private final Project project;
+  private final GradleProjectData projectData;
+  private final Supplier<Project> projectSupplier;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
   private final TempDirectoryProvider tempDirectoryProvider;
   private final Supplier<List<JibGradlePluginExtension<?>>> extensionLoader;
-  private final String configurationName;
 
   @VisibleForTesting
   GradleProjectProperties(
@@ -171,12 +173,27 @@ public class GradleProjectProperties implements ProjectProperties {
       TempDirectoryProvider tempDirectoryProvider,
       Supplier<List<JibGradlePluginExtension<?>>> extensionLoader,
       String configurationName) {
-    this.project = project;
+    this(
+        GradleProjectData.create(project, () -> configurationName),
+        () -> project,
+        logger,
+        tempDirectoryProvider,
+        extensionLoader);
+  }
+
+  @VisibleForTesting
+  GradleProjectProperties(
+      GradleProjectData projectData,
+      Supplier<Project> projectSupplier,
+      Logger logger,
+      TempDirectoryProvider tempDirectoryProvider,
+      Supplier<List<JibGradlePluginExtension<?>>> extensionLoader) {
+    this.projectData = projectData;
+    this.projectSupplier = projectSupplier;
     this.tempDirectoryProvider = tempDirectoryProvider;
     this.extensionLoader = extensionLoader;
-    this.configurationName = configurationName;
     ConsoleLoggerBuilder consoleLoggerBuilder =
-        (isProgressFooterEnabled(project)
+        (isProgressFooterEnabled(projectData)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
                 : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
             .lifecycle(logger::lifecycle);
@@ -199,16 +216,7 @@ public class GradleProjectProperties implements ProjectProperties {
   public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
-      FileCollection projectDependencies =
-          project.files(
-              project.getConfigurations().getByName(configurationName).getResolvedConfiguration()
-                  .getResolvedArtifacts().stream()
-                  .filter(
-                      artifact ->
-                          artifact.getId().getComponentIdentifier()
-                              instanceof ProjectComponentIdentifier)
-                  .map(ResolvedArtifact::getFile)
-                  .collect(Collectors.toList()));
+      FileCollection projectDependencies = projectData.getProjectDependencyFiles();
 
       if (isWarProject()) {
         String warFilePath = getWarFilePath();
@@ -221,12 +229,10 @@ public class GradleProjectProperties implements ProjectProperties {
             projectDependencies.getFiles().stream().map(File::getName).collect(Collectors.toSet()));
       }
 
-      SourceSet mainSourceSet = getMainSourceSet();
       FileCollection classesOutputDirectories =
-          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
-      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles =
-          project.getConfigurations().getByName(configurationName).filter(File::exists);
+          projectData.getClassesOutputDirectories().filter(File::exists);
+      Path resourcesOutputDirectory = projectData.getResourcesOutputDirectory();
+      FileCollection allFiles = projectData.getDependencyFiles().filter(File::exists);
 
       FileCollection nonProjectDependencies =
           allFiles
@@ -269,8 +275,7 @@ public class GradleProjectProperties implements ProjectProperties {
 
         case PACKAGED:
           // Add a JAR
-          Jar jarTask = (Jar) project.getTasks().findByName("jar");
-          Path jarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
+          Path jarPath = Verify.verifyNotNull(projectData.getJarFile()).toPath();
           log(LogEvent.debug("Using JAR: " + jarPath));
           javaContainerBuilder.addToClasspath(jarPath);
           break;
@@ -290,7 +295,7 @@ public class GradleProjectProperties implements ProjectProperties {
   public List<Path> getClassFiles() throws IOException {
     // TODO: Consolidate with createJibContainerBuilder
     FileCollection classesOutputDirectories =
-        getMainSourceSet().getOutput().getClassesDirs().filter(File::exists);
+        projectData.getClassesOutputDirectories().filter(File::exists);
     List<Path> classFiles = new ArrayList<>();
     for (File classesOutputDirectory : classesOutputDirectories) {
       classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk());
@@ -301,7 +306,7 @@ public class GradleProjectProperties implements ProjectProperties {
   @Override
   public List<Path> getDependencies() {
     List<Path> dependencies = new ArrayList<>();
-    FileCollection runtimeClasspath = project.getConfigurations().getByName(configurationName);
+    FileCollection runtimeClasspath = projectData.getDependencyFiles();
     // To be on the safe side with the order, calling "forEach" first (no filtering operations).
     runtimeClasspath.forEach(
         file -> {
@@ -360,31 +365,12 @@ public class GradleProjectProperties implements ProjectProperties {
   @Nullable
   @Override
   public String getMainClassFromJarPlugin() {
-    Jar jarTask = (Jar) project.getTasks().findByName("jar");
-    if (jarTask == null) {
-      return null;
-    }
-
-    Object value = jarTask.getManifest().getAttributes().get("Main-Class");
-
-    if (value instanceof Provider) {
-      value = ((Provider<?>) value).getOrNull();
-    }
-
-    if (value instanceof String) {
-      return (String) value;
-    }
-
-    if (value == null) {
-      return null;
-    }
-
-    return String.valueOf(value);
+    return projectData.getMainClassFromJar();
   }
 
   @Override
   public Path getDefaultCacheDirectory() {
-    return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
+    return projectData.getBuildDirectory().toPath().resolve(CACHE_DIRECTORY_NAME);
   }
 
   @Override
@@ -394,64 +380,27 @@ public class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return project.getPlugins().hasPlugin(WarPlugin.class);
-  }
-
-  /**
-   * Returns the input files for a task. These files include the gradle {@link
-   * org.gradle.api.artifacts.Configuration}, output directories (classes, resources, etc.) of the
-   * main {@link org.gradle.api.tasks.SourceSet}, and any extraDirectories defined by the user to
-   * include in the container.
-   *
-   * @param project the gradle project
-   * @param extraDirectories the image's configured extra directories
-   * @return the input files
-   */
-  @VisibleForTesting
-  static FileCollection getInputFiles(
-      Project project, List<Path> extraDirectories, String configurationName) {
-    List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    dependencyFileCollections.add(project.getConfigurations().getByName(configurationName));
-    // Output directories (classes and resources) from main SourceSet are added
-    // so that BuildTarTask picks up changes in these and do not skip task
-    SourceSetContainer sourceSetContainer =
-        project.getExtensions().getByType(SourceSetContainer.class);
-    SourceSet mainSourceSet = sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
-    dependencyFileCollections.add(mainSourceSet.getOutput());
-
-    extraDirectories.stream()
-        .filter(Files::exists)
-        .map(Path::toFile)
-        .map(project::files)
-        .forEach(dependencyFileCollections::add);
-
-    return project.files(dependencyFileCollections);
+    return projectData.isWarProject();
   }
 
   @Override
   public String getName() {
-    return project.getName();
+    return projectData.getName();
   }
 
   @Override
   public String getVersion() {
-    return project.getVersion().toString();
+    return projectData.getVersion();
   }
 
   @Override
   public int getMajorJavaVersion() {
-    JavaVersion version = JavaVersion.current();
-    JavaPluginExtension javaPluginExtension =
-        project.getExtensions().findByType(JavaPluginExtension.class);
-    if (javaPluginExtension != null) {
-      version = javaPluginExtension.getTargetCompatibility();
-    }
-    return Integer.valueOf(version.getMajorVersion());
+    return projectData.getMajorJavaVersion();
   }
 
   @Override
   public boolean isOffline() {
-    return project.getGradle().getStartParameter().isOffline();
+    return projectData.isOffline();
   }
 
   @Override
@@ -509,6 +458,7 @@ public class GradleProjectProperties implements ProjectProperties {
         // configs.get() is of type Action, so this cast always succeeds.
         // (Note generic <T> is erased at runtime.)
         Action<T> action = (Action<T>) configs.get();
+        Project project = projectSupplier.get();
         extraConfig = project.getObjects().newInstance(extraConfigType.get(), project);
         action.execute(extraConfig);
       }
@@ -520,7 +470,7 @@ public class GradleProjectProperties implements ProjectProperties {
               buildPlan,
               config.getProperties(),
               Optional.ofNullable(extraConfig),
-              () -> project,
+              projectSupplier::get,
               new PluginExtensionLogger(this::log));
     } catch (RuntimeException ex) {
       throw new JibPluginExtensionException(
@@ -542,11 +492,5 @@ public class GradleProjectProperties implements ProjectProperties {
               + config.getExtensionClass());
     }
     return found.get();
-  }
-
-  private SourceSet getMainSourceSet() {
-    SourceSetContainer sourceSetContainer =
-        project.getExtensions().getByType(SourceSetContainer.class);
-    return sourceSetContainer.getByName(MAIN_SOURCE_SET_NAME);
   }
 }

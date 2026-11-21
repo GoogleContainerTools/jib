@@ -1,0 +1,48 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+version = '1.0'
+
+dependencies {
+  implementation project(':lib')
+  implementation files('libs/dependency-1.0.0.jar', 'libs/snapshot-dependency-1.0.0-SNAPSHOT.jar')
+}
+
+jib {
+  from {
+    image = 'scratch'
+  }
+  to {
+    image = 'configuration-cache-test'
+    tags = ['tag1', 'tag2']
+  }
+  container {
+    mainClass = 'com.test.HelloWorld'
+    jvmFlags = ['-Xms512m']
+    ports = ['8080']
+    environment = [ENV_KEY: 'value']
+    labels = [label: 'value']
+  }
+  extraDirectories {
+    paths {
+      path {
+        from = file('src/main/custom-extra-dir')
+        into = '/extra'
+      }
+    }
+    permissions = ['/extra/foo': '755']
+  }
+  outputPaths {
+    tar = 'build/custom/jib-image.tar'
+  }
+  skaffold {
+    watch {
+      includes = ['watch-include']
+    }
+    sync {
+      excludes = ['sync-exclude']
+    }
+  }
+}

@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -37,7 +39,9 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
@@ -50,12 +54,43 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class FilesTaskV2 extends DefaultTask {
 
-  private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
+  /**
+   * Build files and source directories of the project and its project dependencies. Collected at
+   * configuration time, as the {@link Project} model must not be accessed at execution time.
+   */
+  private static class ProjectFiles {
+
+    private final List<File> buildFiles = new ArrayList<>();
+    private final List<File> sourceDirectories = new ArrayList<>();
+    private final List<File> dependencySourceDirectories = new ArrayList<>();
+    private final Set<File> projectDependencyJars = new HashSet<>();
+  }
 
   @Nullable private JibExtension jibExtension;
+  @Nullable private FileCollection configurationFiles;
+  @Nullable private Provider<ProjectFiles> projectFiles;
 
+  /**
+   * Sets the task's {@link JibExtension} and captures the project state needed at execution time.
+   *
+   * @param jibExtension the {@link JibExtension}
+   * @return this
+   */
   public FilesTaskV2 setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
+    Project project = getProject();
+    configurationFiles =
+        project.files(
+            (Callable<FileCollection>)
+                () ->
+                    project
+                        .getConfigurations()
+                        .getByName(jibExtension.getConfigurationName().get()));
+    projectFiles =
+        project
+            .getProviders()
+            .provider(
+                () -> collectProjectFiles(project, jibExtension.getConfigurationName().get()));
     return this;
   }
 
@@ -67,14 +102,16 @@ public class FilesTaskV2 extends DefaultTask {
   @TaskAction
   public void listFiles() throws IOException {
     Preconditions.checkNotNull(jibExtension);
-    Project project = getProject();
+    ProjectFiles files = Preconditions.checkNotNull(projectFiles).get();
+    SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
-    // If this is not the root project, add the root project's build.gradle and settings.gradle
-    if (project != project.getRootProject()) {
-      addGradleFiles(project.getRootProject());
-    }
+    // Add build config, settings, etc. of the project, its root project and project dependencies
+    files.buildFiles.forEach(file -> skaffoldFilesOutput.addBuild(file.toPath()));
 
-    addProjectFiles(project);
+    // Add sources + resources
+    files.sourceDirectories.stream()
+        .filter(File::exists)
+        .forEach(directory -> skaffoldFilesOutput.addInput(directory.toPath()));
 
     // Add extra layer
     List<Path> extraDirectories =
@@ -83,30 +120,14 @@ public class FilesTaskV2 extends DefaultTask {
             .collect(Collectors.toList());
     extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);
 
-    // Find project dependencies
-    Set<ProjectDependency> projectDependencies = findProjectDependencies(project);
-
-    Set<File> projectDependencyJars = new HashSet<>();
-    for (ProjectDependency projectDependency : projectDependencies) {
-      Project dependentProject = getDependentProject(projectDependency);
-      addProjectFiles(dependentProject);
-
-      // Keep track of project dependency jars for filtering out later
-      String configurationName = projectDependency.getTargetConfiguration();
-      if (configurationName == null) {
-        configurationName = "default";
-      }
-      for (Configuration targetConfiguration :
-          dependentProject.getConfigurations().getByName(configurationName).getHierarchy()) {
-        for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
-          projectDependencyJars.add(artifact.getFile());
-        }
-      }
-    }
+    // Add sources + resources of project dependencies
+    files.dependencySourceDirectories.stream()
+        .filter(File::exists)
+        .forEach(directory -> skaffoldFilesOutput.addInput(directory.toPath()));
 
     // Add SNAPSHOT, non-project dependency jars
-    for (File file :
-        project.getConfigurations().getByName(jibExtension.getConfigurationName().get())) {
+    Set<File> projectDependencyJars = new HashSet<>(files.projectDependencyJars);
+    for (File file : Preconditions.checkNotNull(configurationFiles)) {
       if (!projectDependencyJars.contains(file) && file.toString().contains("SNAPSHOT")) {
         skaffoldFilesOutput.addInput(file.toPath());
         projectDependencyJars.add(file); // Add to set to avoid printing the same files twice
@@ -128,22 +149,62 @@ public class FilesTaskV2 extends DefaultTask {
   }
 
   /**
+   * Collects the build files and source directories of a project and its project dependencies.
+   *
+   * @param project the project
+   * @param configurationName the name of the configuration to search for project dependencies
+   * @return the collected files
+   */
+  private ProjectFiles collectProjectFiles(Project project, String configurationName) {
+    ProjectFiles files = new ProjectFiles();
+
+    // If this is not the root project, add the root project's build.gradle and settings.gradle
+    if (project != project.getRootProject()) {
+      addGradleFiles(project.getRootProject(), files.buildFiles);
+    }
+
+    addProjectFiles(project, files.buildFiles, files.sourceDirectories);
+
+    // Find project dependencies
+    Set<ProjectDependency> projectDependencies =
+        findProjectDependencies(project, configurationName);
+    for (ProjectDependency projectDependency : projectDependencies) {
+      Project dependentProject = getDependentProject(project, projectDependency);
+      addProjectFiles(dependentProject, files.buildFiles, files.dependencySourceDirectories);
+
+      // Keep track of project dependency jars for filtering out later
+      String targetConfigurationName = projectDependency.getTargetConfiguration();
+      if (targetConfigurationName == null) {
+        targetConfigurationName = "default";
+      }
+      for (Configuration targetConfiguration :
+          dependentProject.getConfigurations().getByName(targetConfigurationName).getHierarchy()) {
+        for (PublishArtifact artifact : targetConfiguration.getArtifacts()) {
+          files.projectDependencyJars.add(artifact.getFile());
+        }
+      }
+    }
+    return files;
+  }
+
+  /**
    * Adds the locations of a project's build.gradle, settings.gradle, and gradle.properties.
    *
    * @param project the project
+   * @param buildFiles the list to add the files to
    */
-  private void addGradleFiles(Project project) {
+  private static void addGradleFiles(Project project, List<File> buildFiles) {
     Path projectPath = project.getProjectDir().toPath();
 
     // Add build.gradle
-    skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
+    buildFiles.add(project.getBuildFile());
 
     // Add settings.gradle
-    addSettingsFile(project, projectPath);
+    addSettingsFile(project, projectPath, buildFiles);
 
     // Add gradle.properties
     if (Files.exists(projectPath.resolve("gradle.properties"))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve("gradle.properties"));
+      buildFiles.add(projectPath.resolve("gradle.properties").toFile());
     }
   }
 
@@ -155,8 +216,9 @@ public class FilesTaskV2 extends DefaultTask {
    *
    * @param project the project
    * @param projectPath the project directory path
+   * @param buildFiles the list to add the file to
    */
-  private void addSettingsFile(Project project, Path projectPath) {
+  private static void addSettingsFile(Project project, Path projectPath, List<File> buildFiles) {
     boolean settingsFileAdded = false;
     try {
       Object startParameter = project.getGradle().getStartParameter();
@@ -164,7 +226,7 @@ public class FilesTaskV2 extends DefaultTask {
           startParameter.getClass().getMethod("getSettingsFile");
       File settingsFile = (File) getSettingsFileMethod.invoke(startParameter);
       if (settingsFile != null) {
-        skaffoldFilesOutput.addBuild(settingsFile.toPath());
+        buildFiles.add(settingsFile);
         settingsFileAdded = true;
       }
     } catch (ReflectiveOperationException e) {
@@ -173,18 +235,21 @@ public class FilesTaskV2 extends DefaultTask {
 
     // Fall back to default settings file location if not already added
     if (!settingsFileAdded && Files.exists(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE))) {
-      skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
+      buildFiles.add(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE).toFile());
     }
   }
 
   /**
-   * Prints build files, sources, and resources associated with a project.
+   * Adds build files, sources, and resources associated with a project.
    *
    * @param project the project
+   * @param buildFiles the list to add the build files to
+   * @param sourceDirectories the list to add the source and resource directories to
    */
-  private void addProjectFiles(Project project) {
+  private static void addProjectFiles(
+      Project project, List<File> buildFiles, List<File> sourceDirectories) {
     // Add build config, settings, etc.
-    addGradleFiles(project);
+    addGradleFiles(project, buildFiles);
 
     // Add sources + resources
     SourceSetContainer sourceSetContainer =
@@ -192,15 +257,7 @@ public class FilesTaskV2 extends DefaultTask {
     if (sourceSetContainer != null) {
       SourceSet mainSourceSet = sourceSetContainer.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
       if (mainSourceSet != null) {
-        mainSourceSet
-            .getAllSource()
-            .getSourceDirectories()
-            .forEach(
-                sourceDirectory -> {
-                  if (sourceDirectory.exists()) {
-                    skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-                  }
-                });
+        sourceDirectories.addAll(mainSourceSet.getAllSource().getSourceDirectories().getFiles());
       }
     }
   }
@@ -209,16 +266,14 @@ public class FilesTaskV2 extends DefaultTask {
    * Collects a project's project dependencies, including all transitive project dependencies.
    *
    * @param project the project to find the project dependencies for
+   * @param configurationName the name of the configuration to search for project dependencies
    * @return the set of project dependencies
    */
-  private Set<ProjectDependency> findProjectDependencies(Project project) {
-    Preconditions.checkNotNull(jibExtension);
-
+  private static Set<ProjectDependency> findProjectDependencies(
+      Project project, String configurationName) {
     Set<ProjectDependency> projectDependencies = new HashSet<>();
     Deque<Project> projects = new ArrayDeque<>();
     projects.push(project);
-
-    String configurationName = jibExtension.getConfigurationName().get();
 
     while (!projects.isEmpty()) {
       Project currentProject = projects.pop();
@@ -233,7 +288,7 @@ public class FilesTaskV2 extends DefaultTask {
               // If this is a project dependency, save it
               ProjectDependency projectDependency = (ProjectDependency) dependency;
               if (!projectDependencies.contains(projectDependency)) {
-                projects.push(getDependentProject(projectDependency));
+                projects.push(getDependentProject(project, projectDependency));
                 projectDependencies.add(projectDependency);
               }
             }
@@ -241,6 +296,7 @@ public class FilesTaskV2 extends DefaultTask {
         }
       }
     }
+
     return projectDependencies;
   }
 
@@ -249,11 +305,12 @@ public class FilesTaskV2 extends DefaultTask {
    *
    * <p>Uses reflection to handle both Gradle 6 (getDependencyProject()) and Gradle 9+ (getPath()).
    *
+   * @param project any project of the build, used to look up the dependent project by path
    * @param projectDependency the project dependency to resolve
    * @return the resolved project
    * @throws RuntimeException if the dependent project could not be resolved
    */
-  private Project getDependentProject(ProjectDependency projectDependency) {
+  private static Project getDependentProject(Project project, ProjectDependency projectDependency) {
     // Try getDependencyProject() first (Gradle 6-8)
     try {
       java.lang.reflect.Method getDependencyProjectMethod =
@@ -270,7 +327,7 @@ public class FilesTaskV2 extends DefaultTask {
     try {
       java.lang.reflect.Method getPathMethod = projectDependency.getClass().getMethod("getPath");
       String path = (String) getPathMethod.invoke(projectDependency);
-      return getProject().project(path);
+      return project.project(path);
     } catch (ReflectiveOperationException e) {
       throw new RuntimeException(
           "Failed to resolve dependent project from " + projectDependency, e);

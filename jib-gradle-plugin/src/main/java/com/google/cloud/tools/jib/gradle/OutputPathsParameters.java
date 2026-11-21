@@ -20,14 +20,14 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.inject.Inject;
-import org.gradle.api.Project;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Object that configures where Jib should create its build output files. */
 public class OutputPathsParameters {
 
-  private final Project project;
+  private final Path projectDir;
 
   private Path digest;
   private Path tar;
@@ -35,12 +35,13 @@ public class OutputPathsParameters {
   private Path imageJson;
 
   @Inject
-  public OutputPathsParameters(Project project) {
-    this.project = project;
-    digest = project.getBuildDir().toPath().resolve("jib-image.digest");
-    imageId = project.getBuildDir().toPath().resolve("jib-image.id");
-    imageJson = project.getBuildDir().toPath().resolve("jib-image.json");
-    tar = project.getBuildDir().toPath().resolve("jib-image.tar");
+  public OutputPathsParameters(ProjectLayout layout) {
+    projectDir = layout.getProjectDirectory().getAsFile().toPath();
+    Path buildDir = layout.getBuildDirectory().get().getAsFile().toPath();
+    digest = buildDir.resolve("jib-image.digest");
+    imageId = buildDir.resolve("jib-image.id");
+    imageJson = buildDir.resolve("jib-image.json");
+    tar = buildDir.resolve("jib-image.tar");
   }
 
   @Input
@@ -102,6 +103,6 @@ public class OutputPathsParameters {
   private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
     String property = System.getProperty(propertyName);
     Path path = property != null ? Paths.get(property) : configuration;
-    return path.isAbsolute() ? path : project.getProjectDir().toPath().resolve(path);
+    return path.isAbsolute() ? path : projectDir.resolve(path);
   }
 }
