@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class GradleRawConfigurationTest {
 
   @Mock private MapProperty<String, String> labels;
+  @Mock private MapProperty<String, String> environment;
 
   @Test
   public void testGetters() {
@@ -85,8 +86,9 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
     Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
-    Mockito.when(containerParameters.getEnvironment())
+    Mockito.when(environment.get())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
+    Mockito.when(containerParameters.getEnvironment()).thenReturn(environment);
     Mockito.when(containerParameters.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(labels.get()).thenReturn(Collections.singletonMap("unit", "cm"));
     Mockito.when(containerParameters.getLabels()).thenReturn(labels);
