@@ -4,7 +4,8 @@
   "config":{
     "mediaType": "type",
     "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "size": 10
+    "size": 10,
+    "data": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImhpc3RvcnkiOltdfQ=="
   },
   "layers":[
     {
