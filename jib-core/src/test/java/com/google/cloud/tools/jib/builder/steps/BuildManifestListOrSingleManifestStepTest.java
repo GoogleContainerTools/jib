@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OciIndexTemplate;
+import com.google.cloud.tools.jib.image.json.OciManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
@@ -36,7 +38,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link BuildManifestListOrSingleManifest}. */
+/** Tests for {@link BuildManifestListOrSingleManifestStep}. */
 @RunWith(MockitoJUnitRunner.class)
 public class BuildManifestListOrSingleManifestStepTest {
 
@@ -146,6 +148,52 @@ public class BuildManifestListOrSingleManifestStepTest {
         manifestList.getDigestsForPlatform("amd64", "linux"));
     Assert.assertEquals(
         Arrays.asList("sha256:439351c848845c46a3952f28416992b66003361d00943b6cdb04b6d5533f02bf"),
+        manifestList.getDigestsForPlatform("arm64", "windows"));
+  }
+
+  @Test
+  public void testCall_manifestOciIndex() throws IOException {
+
+    // Expected Manifest Index JSON
+    //  {
+    //  "schemaVersion":2,
+    //  "mediaType":"application/vnd.oci.image.index.v1+json",
+    //  "manifests":[
+    //    {
+    //      "mediaType":"application/vnd.oci.image.manifest.v1+json",
+    //      "digest":"sha256:9591d0e20a39c41abdf52d2f8f30c97d7aeccbc3835999152e73a85de434d781",
+    //      "size":338,
+    //      "platform":{
+    //        "architecture":"amd64",
+    //        "os":"linux"
+    //      }
+    //    },
+    //    {
+    //      "mediaType":"application/vnd.oci.image.manifest.v1+json",
+    //      "digest":"sha256:8e0e6885ba5969d8fedf3f1b38ec68bb8fbf9f528c6e4c516328a81525ec479f",
+    //      "size":338,
+    //      "platform":{
+    //        "architecture":"arm64",
+    //        "os":"windows"
+    //      }
+    //    }
+    //  ]
+    // }
+
+    Mockito.doReturn(OciManifestTemplate.class).when(buildContext).getTargetFormat();
+    ManifestTemplate manifestTemplate =
+        new BuildManifestListOrSingleManifestStep(
+                buildContext, progressDispatcherFactory, Arrays.asList(image1, image2))
+            .call();
+
+    Assert.assertTrue(manifestTemplate instanceof OciIndexTemplate);
+    OciIndexTemplate manifestList = (OciIndexTemplate) manifestTemplate;
+    Assert.assertEquals(2, manifestList.getSchemaVersion());
+    Assert.assertEquals(
+        Arrays.asList("sha256:9591d0e20a39c41abdf52d2f8f30c97d7aeccbc3835999152e73a85de434d781"),
+        manifestList.getDigestsForPlatform("amd64", "linux"));
+    Assert.assertEquals(
+        Arrays.asList("sha256:8e0e6885ba5969d8fedf3f1b38ec68bb8fbf9f528c6e4c516328a81525ec479f"),
         manifestList.getDigestsForPlatform("arm64", "windows"));
   }
 
