@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.api.provider.Property;
@@ -397,10 +398,21 @@ public class JibExtensionTest {
           outputFiles.setTar("path/to/tar");
         });
 
-    assertThat(testJibExtension.getOutputPaths().getDigestPath())
-        .isEqualTo(Paths.get("/path/to/digest").toAbsolutePath());
-    assertThat(testJibExtension.getOutputPaths().getImageIdPath())
-        .isEqualTo(Paths.get("/path/to/id").toAbsolutePath());
+    // The drive root that the "fakeProject" may be different from the drive root
+    // of this project in which the test is being executed (ex C:\ vs D:\)
+    if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("windows")) {
+      Path root = fakeProject.getRootDir().toPath().toAbsolutePath().getRoot();
+      assertThat(testJibExtension.getOutputPaths().getDigestPath())
+          .isEqualTo(root.resolve("/path/to/digest").toAbsolutePath());
+      assertThat(testJibExtension.getOutputPaths().getImageIdPath())
+          .isEqualTo(root.resolve("/path/to/id").toAbsolutePath());
+    } else {
+      assertThat(testJibExtension.getOutputPaths().getDigestPath())
+          .isEqualTo(Paths.get("/path/to/digest").toAbsolutePath());
+      assertThat(testJibExtension.getOutputPaths().getImageIdPath())
+          .isEqualTo(Paths.get("/path/to/id").toAbsolutePath());
+    }
+
     assertThat(testJibExtension.getOutputPaths().getTarPath())
         .isEqualTo(fakeProject.getProjectDir().toPath().resolve("path/to/tar"));
   }
