@@ -79,6 +79,15 @@ public class DescriptorDigest {
     return new DescriptorDigest(hash);
   }
 
+  public static DescriptorDigest fromDigestOrHash(String digestOrHash) throws DigestException {
+      if (digestOrHash.matches(DIGEST_REGEX)) {
+          return fromDigest(digestOrHash);
+      } else if (digestOrHash.matches(HASH_REGEX)) {
+          return fromHash(digestOrHash);
+      }
+      throw new DigestException("Invalid digest or hash: " + digestOrHash);
+  }
+
   private DescriptorDigest(String hash) {
     this.hash = hash;
   }
