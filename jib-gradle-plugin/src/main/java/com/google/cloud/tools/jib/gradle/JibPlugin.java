@@ -186,7 +186,7 @@ public class JibPlugin implements Plugin<Project> {
               projectAfterEvaluation
                   .getExtensions()
                   .getByType(SourceSetContainer.class)
-                  .getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+                  .getByName(jibExtension.getSourceSetName().get());
           jibDependencies.add(mainSourceSet.getRuntimeClasspath());
           jibDependencies.add(
               projectAfterEvaluation
