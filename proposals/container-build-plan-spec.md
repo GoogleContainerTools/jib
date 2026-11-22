@@ -39,7 +39,30 @@ Although looking similar, the structure and semantics of similarly named propert
 
   "layers": [
     {
-      "type": "fileEntries"
+      "type": "platformDependent",
+      "entries": {
+        "amd64_linux": {
+          "type": "fileEntries",
+          "entries": [
+            "src": "/home/jane/workspace/build/jre/x64_linux/bin/java",
+            "dest": "/usr/bin/java",
+            "modificationTime": "2019-07-15T10:15:30+09:00",
+            "permissions": "600"
+          ]
+        },
+        "s390x_linux": {
+          "type": "fileEntries",
+          "entries": [
+            "src": "/home/jane/workspace/build/jre/s390x_linux/bin/java",
+            "dest": "/usr/bin/java",
+            "modificationTime": "2019-07-15T10:15:30+09:00",
+            "permissions": "600"
+          ]
+        }
+      }
+    },
+    {
+      "type": "fileEntries",
       "entries": [
         {
           "src": "/home/jane/workspace/bin/Main.class",
@@ -56,12 +79,12 @@ Although looking similar, the structure and semantics of similarly named propert
       ]
     },
     {
-      "type": "layerArchive"
+      "type": "layerArchive",
       "mediaType": "...",
       "path": "/home/jane/misc/cacerts.tar",
     },
     {
-      "type": "fileEntries"
+      "type": "fileEntries",
       "entries": [
         {
           "src": "/home/workspace/scripts/run.sh",

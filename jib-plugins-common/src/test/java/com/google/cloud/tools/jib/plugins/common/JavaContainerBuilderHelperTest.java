@@ -61,12 +61,13 @@ public class JavaContainerBuilderHelperTest {
       Correspondence.transforming(
           entry -> entry.getExtractionPath().toString(), "has extractionPath of");
 
-  private static FileEntriesLayer getLayerConfigurationByName(
+  private static FileEntriesLayer getFileEntriesLayerByName(
       BuildContext buildContext, String name) {
-    return buildContext.getLayerConfigurations().stream()
-        .filter(layer -> layer.getName().equals(name))
-        .findFirst()
-        .get();
+    return ((FileEntriesLayer)
+        buildContext.getLayerConfigurations().stream()
+            .filter(layer -> layer.getName().equals(name) && layer instanceof FileEntriesLayer)
+            .findFirst()
+            .get());
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -270,15 +271,15 @@ public class JavaContainerBuilderHelperTest {
                 .setExecutorService(MoreExecutors.newDirectExecutorService()));
 
     FileEntriesLayer resourcesLayerConfigurations =
-        getLayerConfigurationByName(buildContext, LayerType.RESOURCES.getName());
+        getFileEntriesLayerByName(buildContext, LayerType.RESOURCES.getName());
     FileEntriesLayer classesLayerConfigurations =
-        getLayerConfigurationByName(buildContext, LayerType.CLASSES.getName());
+        getFileEntriesLayerByName(buildContext, LayerType.CLASSES.getName());
     FileEntriesLayer dependenciesLayerConfigurations =
-        getLayerConfigurationByName(buildContext, LayerType.DEPENDENCIES.getName());
+        getFileEntriesLayerByName(buildContext, LayerType.DEPENDENCIES.getName());
     FileEntriesLayer snapshotsLayerConfigurations =
-        getLayerConfigurationByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+        getFileEntriesLayerByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     FileEntriesLayer projectDependenciesLayerConfigurations =
-        getLayerConfigurationByName(buildContext, LayerType.PROJECT_DEPENDENCIES.getName());
+        getFileEntriesLayerByName(buildContext, LayerType.PROJECT_DEPENDENCIES.getName());
 
     assertThat(projectDependenciesLayerConfigurations.getEntries())
         .comparingElementsUsing(SOURCE_FILE_OF)

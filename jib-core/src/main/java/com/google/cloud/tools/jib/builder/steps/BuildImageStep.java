@@ -121,6 +121,8 @@ class BuildImageStep implements Callable<Image> {
 
       // Add built layers/configuration
       for (PreparedLayer applicationLayer : applicationLayers) {
+        if (!applicationLayer.appliesTo(baseImage)) continue;
+
         imageBuilder
             .addLayer(applicationLayer)
             .addHistory(

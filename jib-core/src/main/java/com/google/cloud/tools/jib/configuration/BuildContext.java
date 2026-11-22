@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -75,7 +76,7 @@ public class BuildContext implements Closeable {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private boolean offline = false;
-    private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
+    private ImmutableList<LayerObject> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     @Nullable private String toolVersion;
@@ -223,7 +224,7 @@ public class BuildContext implements Closeable {
      * @param layerConfigurations the configurations for the layers
      * @return this
      */
-    public Builder setLayerConfigurations(List<FileEntriesLayer> layerConfigurations) {
+    public Builder setLayerConfigurations(List<? extends LayerObject> layerConfigurations) {
       this.layerConfigurations = ImmutableList.copyOf(layerConfigurations);
       return this;
     }
@@ -392,7 +393,7 @@ public class BuildContext implements Closeable {
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean offline;
-  private final ImmutableList<FileEntriesLayer> layerConfigurations;
+  private final ImmutableList<LayerObject> layerConfigurations;
   private final String toolName;
   @Nullable private final String toolVersion;
   private final EventHandlers eventHandlers;
@@ -413,7 +414,7 @@ public class BuildContext implements Closeable {
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean offline,
-      ImmutableList<FileEntriesLayer> layerConfigurations,
+      ImmutableList<LayerObject> layerConfigurations,
       String toolName,
       @Nullable String toolVersion,
       EventHandlers eventHandlers,
@@ -534,7 +535,7 @@ public class BuildContext implements Closeable {
    *
    * @return the list of layer configurations
    */
-  public ImmutableList<FileEntriesLayer> getLayerConfigurations() {
+  public ImmutableList<LayerObject> getLayerConfigurations() {
     return layerConfigurations;
   }
 
