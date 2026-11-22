@@ -134,4 +134,6 @@ public interface RawConfiguration {
   Path getImageJsonOutputPath();
 
   List<? extends ExtensionConfiguration> getPluginExtensions();
+
+  boolean getEnablePlatformTags();
 }
