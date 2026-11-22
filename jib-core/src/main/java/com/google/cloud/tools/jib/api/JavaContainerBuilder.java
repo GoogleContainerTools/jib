@@ -183,6 +183,20 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Starts building the container from a base image stored in the Docker cache. Requires a running
+   * Docker daemon.
+   *
+   * @param dockerClient the {@link DockerClient} to connect
+   * @param dockerDaemonImage the {@link DockerDaemonImage} that defines the base image and Docker
+   *     client
+   * @return a new {@link JavaContainerBuilder}
+   */
+  public static JavaContainerBuilder from(
+      DockerClient dockerClient, DockerDaemonImage dockerDaemonImage) {
+    return new JavaContainerBuilder(Jib.from(dockerClient, dockerDaemonImage));
+  }
+
+  /**
    * Starts building the container from a tarball.
    *
    * @param tarImage the {@link TarImage} that defines the path to the base image
