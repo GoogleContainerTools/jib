@@ -20,7 +20,7 @@ jobs:
       upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 8
         uses: actions/setup-java@v3
