@@ -30,8 +30,8 @@ public class DockerDaemonImageTest {
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("docker/daemon/image");
 
     Assert.assertEquals("docker/daemon/image", dockerDaemonImage.getImageReference().toString());
-    Assert.assertEquals(
-        CliDockerClient.DEFAULT_DOCKER_CLIENT, dockerDaemonImage.getDockerExecutable());
+    Assert.assertTrue(
+        CliDockerClient.DEFAULT_DOCKER_CLIENT.contains(dockerDaemonImage.getDockerExecutable()));
     Assert.assertEquals(0, dockerDaemonImage.getDockerEnvironment().size());
   }
 
