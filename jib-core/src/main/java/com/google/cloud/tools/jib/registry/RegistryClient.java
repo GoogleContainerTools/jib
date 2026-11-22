@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -65,6 +66,8 @@ public class RegistryClient {
 
     @Nullable private String userAgent;
     @Nullable private Credential credential;
+    Supplier<RegistryUnauthorizedExceptionHandler> registryUnauthorizedExceptionHandlerSupplier =
+        RegistryClient::defaultRegistryUnauthorizedExceptionHandler;
 
     private Factory(
         EventHandlers eventHandlers,
@@ -87,6 +90,20 @@ public class RegistryClient {
     }
 
     /**
+     * Sets the supplier for the registry unauthorized exception handler.
+     *
+     * @param registryUnauthorizedExceptionHandlerSupplier the supplier for the exception handler
+     * @return this
+     */
+    public Factory setUnauthorizedExceptionHandlerSupplier(
+        Supplier<RegistryUnauthorizedExceptionHandler>
+            registryUnauthorizedExceptionHandlerSupplier) {
+      this.registryUnauthorizedExceptionHandlerSupplier =
+          registryUnauthorizedExceptionHandlerSupplier;
+      return this;
+    }
+
+    /**
      * Sets the value of {@code User-Agent} in headers for registry requests.
      *
      * @param userAgent user agent string
@@ -104,7 +121,12 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          eventHandlers, credential, registryEndpointRequestProperties, userAgent, httpClient);
+          eventHandlers,
+          credential,
+          registryUnauthorizedExceptionHandlerSupplier,
+          registryEndpointRequestProperties,
+          userAgent,
+          httpClient);
     }
   }
 
@@ -231,6 +253,8 @@ public class RegistryClient {
 
   private final EventHandlers eventHandlers;
   @Nullable private final Credential credential;
+  private final Supplier<RegistryUnauthorizedExceptionHandler>
+      registryUnauthorizedExceptionHandlerSupplier;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   @Nullable private final String userAgent;
   private final FailoverHttpClient httpClient;
@@ -254,11 +278,14 @@ public class RegistryClient {
   private RegistryClient(
       EventHandlers eventHandlers,
       @Nullable Credential credential,
+      Supplier<RegistryUnauthorizedExceptionHandler> registryUnauthorizedExceptionHandlerSupplier,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       @Nullable String userAgent,
       FailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.credential = credential;
+    this.registryUnauthorizedExceptionHandlerSupplier =
+        registryUnauthorizedExceptionHandlerSupplier;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
     this.httpClient = httpClient;
@@ -595,6 +622,16 @@ public class RegistryClient {
     return authorization != null && "bearer".equalsIgnoreCase(authorization.getScheme());
   }
 
+  /**
+   * Obtains the event handlers. This is intended to be used by the {@link
+   * RegistryUnauthorizedExceptionHandler}.
+   *
+   * @return the event
+   */
+  public EventHandlers getEventHandlers() {
+    return eventHandlers;
+  }
+
   @Nullable
   @VisibleForTesting
   String getUserAgent() {
@@ -610,7 +647,8 @@ public class RegistryClient {
    */
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
-    int bearerTokenRefreshes = 0;
+    Supplier<RegistryUnauthorizedExceptionHandler> handlerSupplier =
+        this.registryUnauthorizedExceptionHandlerSupplier;
     while (true) {
       try {
         return new RegistryEndpointCaller<>(
@@ -623,9 +661,22 @@ public class RegistryClient {
             .call();
 
       } catch (RegistryUnauthorizedException ex) {
+        handlerSupplier = handlerSupplier.get().handle(this, ex);
+      }
+    }
+  }
+
+  static class DefaultRegistryUnauthorizedExceptionHandler
+      implements RegistryUnauthorizedExceptionHandler {
+    int bearerTokenRefreshes = 0;
+
+    public Supplier<RegistryUnauthorizedExceptionHandler> handle(
+        final RegistryClient registryClient, final RegistryUnauthorizedException ex)
+        throws RegistryException {
+      {
         if (ex.getHttpResponseException().getStatusCode()
                 != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
-            || !isBearerAuth(authorization.get())
+            || !isBearerAuth(registryClient.authorization.get())
             || ++bearerTokenRefreshes >= MAX_BEARER_TOKEN_REFRESH_TRIES) {
           throw ex;
         }
@@ -633,8 +684,14 @@ public class RegistryClient {
         // Because we successfully did bearer authentication initially, getting 401 here probably
         // means the token was expired.
         String wwwAuthenticate = ex.getHttpResponseException().getHeaders().getAuthenticate();
-        authorization.set(refreshBearerAuth(wwwAuthenticate));
+        registryClient.authorization.set(registryClient.refreshBearerAuth(wwwAuthenticate));
+
+        return () -> this;
       }
     }
+  }
+
+  public static RegistryUnauthorizedExceptionHandler defaultRegistryUnauthorizedExceptionHandler() {
+    return new DefaultRegistryUnauthorizedExceptionHandler();
   }
 }
