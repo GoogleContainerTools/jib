@@ -96,7 +96,7 @@ public class ImageTarball {
 
       tarStreamBuilder.addBlobEntry(
           layer.getBlob(), size, BLOB_PREFIX + digest.getHash(), TAR_ENTRY_MODIFICATION_TIME);
-      manifest.addLayer(size, digest);
+      manifest.addLayer(size, digest, layer.getCompressionAlgorithm());
     }
 
     // Adds the container configuration to the tarball and manifest

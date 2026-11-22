@@ -202,7 +202,9 @@ public class ImageToJsonTranslator {
       // Adds the layers.
       for (Layer layer : image.getLayers()) {
         template.addLayer(
-            layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
+            layer.getBlobDescriptor().getSize(),
+            layer.getBlobDescriptor().getDigest(),
+            layer.getCompressionAlgorithm());
       }
 
       return template;

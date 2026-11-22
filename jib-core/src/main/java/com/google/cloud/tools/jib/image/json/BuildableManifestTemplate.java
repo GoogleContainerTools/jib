@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -60,6 +61,11 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
     /** Necessary for Jackson to create from JSON. */
     @SuppressWarnings("unused")
     protected ContentDescriptorTemplate() {}
+
+    @Nullable
+    public String getMediaType() {
+      return mediaType;
+    }
 
     public long getSize() {
       return size;
@@ -135,6 +141,7 @@ public interface BuildableManifestTemplate extends ManifestTemplate {
    *
    * @param size the size of the layer.
    * @param digest the layer descriptor digest.
+   * @param compressionAlgorithm the layer compression algorithm
    */
-  void addLayer(long size, DescriptorDigest digest);
+  void addLayer(long size, DescriptorDigest digest, CompressionAlgorithm compressionAlgorithm);
 }

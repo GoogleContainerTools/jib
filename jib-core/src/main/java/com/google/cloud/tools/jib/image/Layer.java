@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 
@@ -29,7 +30,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
  *   <li>Content BLOB
  *   <li>
  *       <ul>
- *         <li>The compressed archive (tarball gzip) of the partial filesystem changeset.
+ *         <li>The compressed archive (tarball gzip or zstd) of the partial filesystem changeset.
  *       </ul>
  *   <li>Content Digest
  *   <li>
@@ -52,7 +53,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 public interface Layer {
 
   /**
-   * Returns this layer's contents.
+   * Returns the compressed archive (tarball gzip or zstd) of the partial filesystem changeset.
    *
    * @return the layer's content BLOB
    * @throws LayerPropertyNotFoundException if not available
@@ -69,10 +70,22 @@ public interface Layer {
   BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException;
 
   /**
-   * Returns this layer's diff ID.
+   * Returns the SHA-256 hash of the uncompressed archive (tarball) of the partial filesystem
+   * changeset.
    *
    * @return the layer's diff ID
    * @throws LayerPropertyNotFoundException if not available
    */
   DescriptorDigest getDiffId() throws LayerPropertyNotFoundException;
+
+  /**
+   * Return the layer archive compression algorithm, based on declared metadata.
+   *
+   * <p>When decompressing, the actual compression algorithm should rather be deducted by looking at
+   * magic bytes in the blob.
+   *
+   * @return the layer's compression algorithm
+   * @throws LayerPropertyNotFoundException if not available
+   */
+  CompressionAlgorithm getCompressionAlgorithm() throws LayerPropertyNotFoundException;
 }

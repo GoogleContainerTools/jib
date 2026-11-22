@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
@@ -67,7 +68,8 @@ public class CachedLayerTest {
         CachedLayer.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
-            .setLayerSize(1337);
+            .setLayerSize(1337)
+            .setCompressionAlgorithm(CompressionAlgorithm.GZIP);
     Assert.assertFalse(cachedLayerBuilder.hasLayerBlob());
     cachedLayerBuilder.setLayerBlob(Blobs.from("layerBlob"));
     Assert.assertTrue(cachedLayerBuilder.hasLayerBlob());

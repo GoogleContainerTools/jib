@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.buildplan.CompressionAlgorithm;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -77,6 +78,8 @@ public class BuildContext implements Closeable {
     private boolean offline = false;
     private ImmutableList<FileEntriesLayer> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
+    private CompressionAlgorithm targetCompression = CompressionAlgorithm.GZIP;
+
     private String toolName = DEFAULT_TOOL_NAME;
     @Nullable private String toolVersion;
     private EventHandlers eventHandlers = EventHandlers.NONE;
@@ -178,6 +181,17 @@ public class BuildContext implements Closeable {
           targetFormat == ImageFormat.Docker
               ? V22ManifestTemplate.class
               : OciManifestTemplate.class;
+      return this;
+    }
+
+    /**
+     * Sets the target compression algorithm of the container image.
+     *
+     * @param targetCompression the target compression algorithm
+     * @return this
+     */
+    public Builder setTargetCompression(CompressionAlgorithm targetCompression) {
+      this.targetCompression = targetCompression;
       return this;
     }
 
@@ -329,6 +343,7 @@ public class BuildContext implements Closeable {
               Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
               Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
+              targetCompression,
               offline,
               layerConfigurations,
               toolName,
@@ -391,6 +406,7 @@ public class BuildContext implements Closeable {
   private final Cache baseImageLayersCache;
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
+  private CompressionAlgorithm targetCompressionAlgorithm;
   private final boolean offline;
   private final ImmutableList<FileEntriesLayer> layerConfigurations;
   private final String toolName;
@@ -412,6 +428,7 @@ public class BuildContext implements Closeable {
       Cache baseImageLayersCache,
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
+      CompressionAlgorithm targetCompressionAlgorithm,
       boolean offline,
       ImmutableList<FileEntriesLayer> layerConfigurations,
       String toolName,
@@ -430,6 +447,7 @@ public class BuildContext implements Closeable {
     this.baseImageLayersCache = baseImageLayersCache;
     this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
+    this.targetCompressionAlgorithm = targetCompressionAlgorithm;
     this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
@@ -474,6 +492,10 @@ public class BuildContext implements Closeable {
 
   public Class<? extends BuildableManifestTemplate> getTargetFormat() {
     return targetFormat;
+  }
+
+  public CompressionAlgorithm getTargetCompressionAlgorithm() {
+    return targetCompressionAlgorithm;
   }
 
   public String getToolName() {

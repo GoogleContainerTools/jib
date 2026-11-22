@@ -143,7 +143,8 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                     .pullBlob(
                         layerDigest,
                         progressEventDispatcherWrapper::setProgressTarget,
-                        progressEventDispatcherWrapper::dispatchProgress));
+                        progressEventDispatcherWrapper::dispatchProgress),
+                layer.getCompressionAlgorithm());
         return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
       }
     }
