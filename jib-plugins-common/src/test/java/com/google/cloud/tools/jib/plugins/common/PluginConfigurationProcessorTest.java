@@ -216,6 +216,8 @@ public class PluginConfigurationProcessorTest {
     verify(containerizer).setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     verify(containerizer).setApplicationLayersCache(appCacheDirectory);
 
+    verify(containerizer).setEnablePlatformTags(false);
+
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     verify(logger, never()).accept(argThat(isLogWarn));
   }
