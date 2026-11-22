@@ -50,6 +50,7 @@ class TaskCommon {
   static Future<Optional<String>> newUpdateChecker(
       ProjectProperties projectProperties, GlobalConfig globalConfig, Logger logger) {
     if (projectProperties.isOffline()
+        || projectProperties.isDisableUpdateCheck()
         || !logger.isLifecycleEnabled()
         || globalConfig.isDisableUpdateCheck()) {
       return Futures.immediateFuture(Optional.empty());
