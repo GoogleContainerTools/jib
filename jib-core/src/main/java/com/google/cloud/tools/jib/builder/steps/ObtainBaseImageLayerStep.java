@@ -31,8 +31,14 @@ import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
@@ -40,6 +46,13 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   @SuppressWarnings("InlineFormatString")
   private static final String DESCRIPTION = "Pulling base image layer %s";
+
+  /**
+   * Layers currently being pulled in this JVM, keyed by cache directory and layer digest. Lets
+   * parallel builds (e.g., "mvn -T") that share a base image and a cache pull each layer once.
+   */
+  private static final Map<Map.Entry<Path, DescriptorDigest>, CompletableFuture<CachedLayer>>
+      inFlightPulls = new ConcurrentHashMap<>();
 
   @FunctionalInterface
   private interface BlobExistenceChecker {
@@ -133,6 +146,19 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 + "re-download the base image layers.");
       }
 
+      // If another build in this JVM is already pulling the same layer, reuse its result.
+      Map.Entry<Path, DescriptorDigest> pullKey =
+          new SimpleEntry<>(cache.getDirectory(), layerDigest);
+      CompletableFuture<CachedLayer> thisPull = new CompletableFuture<>();
+      CompletableFuture<CachedLayer> otherPull = inFlightPulls.putIfAbsent(pullKey, thisPull);
+      if (otherPull != null) {
+        CachedLayer sharedLayer = waitForOtherPull(otherPull);
+        if (sharedLayer != null) {
+          return new PreparedLayer.Builder(sharedLayer).setStateInTarget(stateInTarget).build();
+        }
+        // The other pull failed; fall through and pull the layer here.
+      }
+
       try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
           new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
@@ -144,8 +170,34 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                         layerDigest,
                         progressEventDispatcherWrapper::setProgressTarget,
                         progressEventDispatcherWrapper::dispatchProgress));
+        thisPull.complete(cachedLayer);
         return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
+
+      } finally {
+        // No-op if the pull completed; otherwise lets waiting builds fall back to pulling.
+        thisPull.completeExceptionally(new IOException("Pull of " + layerDigest + " failed"));
+        inFlightPulls.remove(pullKey, thisPull);
       }
+    }
+  }
+
+  /**
+   * Waits for a pull of the same layer started by another build.
+   *
+   * @return the pulled layer, or {@code null} if that pull failed
+   */
+  @Nullable
+  private static CachedLayer waitForOtherPull(CompletableFuture<CachedLayer> otherPull)
+      throws IOException {
+    try {
+      return otherPull.get();
+
+    } catch (ExecutionException ex) {
+      return null;
+
+    } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while waiting for the layer to be pulled", ex);
     }
   }
 }
