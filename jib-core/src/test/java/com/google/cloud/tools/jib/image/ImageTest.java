@@ -95,4 +95,31 @@ public class ImageTest {
     Assert.assertEquals("wasm", image.getArchitecture());
     Assert.assertEquals("js", image.getOs());
   }
+
+  @Test
+  public void testBaseImageInfo() {
+    Image image =
+        Image.builder(V22ManifestTemplate.class)
+            .setBaseImageName("alpine:3.18")
+            .setBaseImageDigest("sha256:abc123")
+            .build();
+    Assert.assertEquals("alpine:3.18", image.getBaseImageName());
+    Assert.assertEquals("sha256:abc123", image.getBaseImageDigest());
+  }
+
+  @Test
+  public void testBaseImageInfo_defaults() {
+    Image image = Image.builder(V22ManifestTemplate.class).build();
+    Assert.assertNull(image.getBaseImageName());
+    Assert.assertNull(image.getBaseImageDigest());
+  }
+
+  @Test
+  public void testBaseImageDigest_mutableSetter() {
+    Image image = Image.builder(V22ManifestTemplate.class).build();
+    Assert.assertNull(image.getBaseImageDigest());
+
+    image.setBaseImageDigest("sha256:def456");
+    Assert.assertEquals("sha256:def456", image.getBaseImageDigest());
+  }
 }

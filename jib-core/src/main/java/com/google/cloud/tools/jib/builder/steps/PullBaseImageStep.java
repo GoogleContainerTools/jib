@@ -297,11 +297,16 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
       ProgressEventDispatcher.Factory childProgressDispatcherFactory =
           progressDispatcher1.newChildProducer();
 
+      String baseImageDigest =
+          manifestAndDigest.getDigest() != null ? manifestAndDigest.getDigest().toString() : null;
+
       ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
       if (manifestTemplate instanceof V21ManifestTemplate) {
         V21ManifestTemplate v21Manifest = (V21ManifestTemplate) manifestTemplate;
         cache.writeMetadata(baseImageConfig.getImage(), v21Manifest);
-        return Collections.singletonList(JsonToImageTranslator.toImage(v21Manifest));
+        Image image = JsonToImageTranslator.toImage(v21Manifest);
+        image.setBaseImageDigest(baseImageDigest);
+        return Collections.singletonList(image);
 
       } else if (manifestTemplate instanceof BuildableManifestTemplate) {
         // V22ManifestTemplate or OciManifestTemplate
@@ -311,8 +316,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
                 manifestAndDigest, registryClient, childProgressDispatcherFactory);
         PlatformChecker.checkManifestPlatform(buildContext, containerConfig);
         cache.writeMetadata(baseImageConfig.getImage(), imageManifest, containerConfig);
-        return Collections.singletonList(
-            JsonToImageTranslator.toImage(imageManifest, containerConfig));
+        Image image = JsonToImageTranslator.toImage(imageManifest, containerConfig);
+        image.setBaseImageDigest(baseImageDigest);
+        return Collections.singletonList(image);
       }
 
       Verify.verify(manifestTemplate instanceof ManifestListTemplate);
@@ -344,7 +350,9 @@ class PullBaseImageStep implements Callable<ImagesAndRegistryClient> {
 
           manifestsAndConfigs.add(
               new ManifestAndConfigTemplate(imageManifest, containerConfig, manifestDigest));
-          images.add(JsonToImageTranslator.toImage(imageManifest, containerConfig));
+          Image image = JsonToImageTranslator.toImage(imageManifest, containerConfig);
+          image.setBaseImageDigest(manifestDigest);
+          images.add(image);
         }
       }
 
