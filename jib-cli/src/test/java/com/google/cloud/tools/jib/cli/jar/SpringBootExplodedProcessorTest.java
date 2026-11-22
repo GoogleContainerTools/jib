@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cli.jar;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
@@ -43,6 +44,8 @@ public class SpringBootExplodedProcessorTest {
   private static final String SPRING_BOOT_LAYERED_WITH_ALL_EMPTY_LAYERS_LISTED =
       "jar/spring-boot/springboot_layered_allEmptyLayers.jar";
   private static final String SPRING_BOOT_NOT_LAYERED = "jar/spring-boot/springboot_notLayered.jar";
+  private static final String SPRING_BOOT_NO_MANIFEST =
+      "jar/spring-boot/springboot_noMainClass_in_manifest.jar";
   private static final Integer JAR_JAVA_VERSION = 0; // any value
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -239,27 +242,53 @@ public class SpringBootExplodedProcessorTest {
   }
 
   @Test
-  public void testComputeEntrypoint() {
+  public void testComputeEntrypoint() throws URISyntaxException, IOException {
+    Path sampleSpringBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     SpringBootExplodedProcessor bootProcessor =
         new SpringBootExplodedProcessor(
-            Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
+            sampleSpringBootJar, Paths.get("ignored"), JAR_JAVA_VERSION);
     ImmutableList<String> actualEntrypoint = bootProcessor.computeEntrypoint(new ArrayList<>());
     assertThat(actualEntrypoint)
         .isEqualTo(
-            ImmutableList.of("java", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+            ImmutableList.of(
+                "java", "-cp", "/app", "org.springframework.boot.loader.launch.JarLauncher"));
   }
 
   @Test
-  public void testComputeEntrypoint_withJvmFlags() {
+  public void testComputeEntrypoint_withJvmFlags() throws URISyntaxException, IOException {
+    Path sampleSpringBootJar = Paths.get(Resources.getResource(SPRING_BOOT_LAYERED).toURI());
     SpringBootExplodedProcessor bootProcessor =
         new SpringBootExplodedProcessor(
-            Paths.get("ignored"), Paths.get("ignored"), JAR_JAVA_VERSION);
+            sampleSpringBootJar, Paths.get("ignored"), JAR_JAVA_VERSION);
     ImmutableList<String> actualEntrypoint =
         bootProcessor.computeEntrypoint(ImmutableList.of("-jvm-flag"));
     assertThat(actualEntrypoint)
         .isEqualTo(
             ImmutableList.of(
-                "java", "-jvm-flag", "-cp", "/app", "org.springframework.boot.loader.JarLauncher"));
+                "java",
+                "-jvm-flag",
+                "-cp",
+                "/app",
+                "org.springframework.boot.loader.launch.JarLauncher"));
+  }
+
+  @Test
+  public void testComputeEntrypoint_noMainClass() throws URISyntaxException {
+    Path layeredSpringBootJar = Paths.get(Resources.getResource(SPRING_BOOT_NO_MANIFEST).toURI());
+    SpringBootExplodedProcessor bootProcessor =
+        new SpringBootExplodedProcessor(
+            layeredSpringBootJar, Paths.get("ignored"), JAR_JAVA_VERSION);
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> bootProcessor.computeEntrypoint(ImmutableList.of()));
+
+    assertThat(exception)
+        .hasMessageThat()
+        .isEqualTo(
+            "`Main-Class:` attribute for an application main class not defined in the input JAR's manifest "
+                + "(`META-INF/MANIFEST.MF` in the JAR).");
   }
 
   @Test
