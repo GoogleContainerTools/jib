@@ -35,8 +35,11 @@ public class FileEntriesLayer implements LayerObject {
 
     private String name = "";
     private List<FileEntry> entries = new ArrayList<>();
+	private boolean retainSymlinks;
 
-    private Builder() {}
+    private Builder(boolean retainSymlinks) {
+    	this.retainSymlinks = retainSymlinks;
+    }
 
     /**
      * Sets a name for this layer. This name does not affect the contents of the layer.
@@ -188,8 +191,8 @@ public class FileEntriesLayer implements LayerObject {
     }
 
     /**
-     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
-     * will be added recursively.
+     * Adds an entry to the layer. If the source file is a directory, or a symbolic link pointing to a directory
+     * and symbolic links are to be resolved, the directory and its contents will be added recursively.
      *
      * <p>For example, {@code addEntryRecursive(Paths.get("mydirectory",
      * AbsoluteUnixPath.get("/path/in/container"))} adds {@code mydirectory} to the container file
@@ -208,8 +211,8 @@ public class FileEntriesLayer implements LayerObject {
     }
 
     /**
-     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
-     * will be added recursively.
+     * Adds an entry to the layer. If the source file is a directory, or a symbolic link pointing to a directory
+     * and symbolic links are to be resolved, the directory and its contents will be added recursively.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code
@@ -229,8 +232,8 @@ public class FileEntriesLayer implements LayerObject {
     }
 
     /**
-     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
-     * will be added recursively.
+     * Adds an entry to the layer. If the source file is a directory, or a symbolic link pointing to a directory
+     * and symbolic links are to be resolved, the directory and its contents will be added recursively.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code
@@ -257,8 +260,8 @@ public class FileEntriesLayer implements LayerObject {
     }
 
     /**
-     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
-     * will be added recursively.
+     * Adds an entry to the layer. If the source file is a directory, or a symbolic link pointing to a directory
+     * and symbolic links are to be resolved, the directory and its contents will be added recursively.
      *
      * @param sourceFile the source file to add to the layer recursively
      * @param pathInContainer the path in the container file system corresponding to the {@code
@@ -283,7 +286,7 @@ public class FileEntriesLayer implements LayerObject {
       Instant modificationTime = modificationTimeProvider.get(sourceFile, pathInContainer);
       String ownership = ownershipProvider.get(sourceFile, pathInContainer);
       addEntry(sourceFile, pathInContainer, permissions, modificationTime, ownership);
-      if (!Files.isDirectory(sourceFile)) {
+      if (!Files.isDirectory(sourceFile) || retainSymlinks && Files.isSymbolicLink(sourceFile)) {
         return this;
       }
       try (Stream<Path> files = Files.list(sourceFile)) {
@@ -305,7 +308,7 @@ public class FileEntriesLayer implements LayerObject {
      * @return the built {@link FileEntriesLayer}
      */
     public FileEntriesLayer build() {
-      return new FileEntriesLayer(name, entries);
+      return new FileEntriesLayer(name, entries, retainSymlinks);
     }
   }
 
@@ -331,16 +334,29 @@ public class FileEntriesLayer implements LayerObject {
       (sourcePath, destinationPath) -> "";
 
   /**
-   * Gets a new {@link Builder} for {@link FileEntriesLayer}.
+   * Gets a new {@link Builder} for {@link FileEntriesLayer} that does
+   * not retain symbolic links, i.e., that resolves them.
    *
    * @return a new {@link Builder}
    */
   public static Builder builder() {
-    return new Builder();
+    return new Builder(false);
+  }
+
+  /**
+   * Gets a new {@link Builder} for {@link FileEntriesLayer}.
+   *
+   * @param Whether to retain symbolic links or whether to resolve them.
+   *
+   * @return a new {@link Builder}
+   */
+  public static Builder builder(boolean retainSymlinks) {
+	  return new Builder(retainSymlinks);
   }
 
   private final String name;
   private final List<FileEntry> entries;
+  private boolean retainSymlinks;
 
   /**
    * Use {@link #builder} to instantiate.
@@ -348,9 +364,10 @@ public class FileEntriesLayer implements LayerObject {
    * @param name an optional name for the layer
    * @param entries the list of {@link FileEntry}s
    */
-  private FileEntriesLayer(String name, List<FileEntry> entries) {
+  private FileEntriesLayer(String name, List<FileEntry> entries, boolean retainSymlinks) {
     this.name = name;
     this.entries = entries;
+    this.retainSymlinks = retainSymlinks;
   }
 
   @Override
@@ -378,11 +395,18 @@ public class FileEntriesLayer implements LayerObject {
   }
 
   /**
+   * @return Whether this layer retains symbolic links or resolves them.
+   */
+  public boolean isSetToRetainSymlinks() {
+	return retainSymlinks;
+  }
+
+  /**
    * Creates a builder configured with the current values.
    *
    * @return {@link Builder} configured with the current values
    */
   public Builder toBuilder() {
-    return builder().setName(name).setEntries(entries);
+    return builder(retainSymlinks).setName(name).setEntries(entries);
   }
 }

@@ -95,6 +95,9 @@ public class BuildAndCacheApplicationLayerStepTest {
   private FileEntriesLayer fakeExtraFilesLayerConfiguration;
   private FileEntriesLayer emptyLayerConfiguration;
 
+  private boolean retainSymlinks = false;
+
+
   @Before
   public void setUp() throws IOException, URISyntaxException, CacheDirectoryCreationException {
     fakeDependenciesLayerConfiguration =
@@ -170,15 +173,15 @@ public class BuildAndCacheApplicationLayerStepTest {
         ImmutableList.copyOf(fakeLayerConfigurations.get(4).getEntries());
 
     CachedLayer dependenciesCachedLayer =
-        cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(dependenciesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer snapshotDependenciesCachedLayer =
-        cache.retrieve(snapshotDependenciesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(snapshotDependenciesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer resourcesCachedLayer =
-        cache.retrieve(resourcesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(resourcesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer classesCachedLayer =
-        cache.retrieve(classesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(classesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer extraFilesCachedLayer =
-        cache.retrieve(extraFilesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(extraFilesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
 
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(
@@ -226,11 +229,11 @@ public class BuildAndCacheApplicationLayerStepTest {
         ImmutableList.copyOf(fakeLayerConfigurations.get(3).getEntries());
 
     CachedLayer dependenciesCachedLayer =
-        cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(dependenciesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer resourcesCachedLayer =
-        cache.retrieve(resourcesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(resourcesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
     CachedLayer classesCachedLayer =
-        cache.retrieve(classesLayerEntries).orElseThrow(AssertionError::new);
+        cache.retrieve(classesLayerEntries, retainSymlinks).orElseThrow(AssertionError::new);
 
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(

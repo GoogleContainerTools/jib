@@ -137,13 +137,14 @@ public class Cache {
    *
    * @param uncompressedLayerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
+   * @param retainSymlinks - Whether symbolic links are to be retained or not.
    * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeUncompressedLayer(
-      Blob uncompressedLayerBlob, ImmutableList<FileEntry> layerEntries) throws IOException {
+      Blob uncompressedLayerBlob, ImmutableList<FileEntry> layerEntries, boolean retainSymlinks) throws IOException {
     return cacheStorageWriter.writeUncompressed(
-        uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
+        uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries, retainSymlinks));
   }
 
   /**
@@ -207,14 +208,15 @@ public class Cache {
    * Retrieves the {@link CachedLayer} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
+   * @param retainSymlinks - Whether symbolic links are to be retained or not.
    * @return a {@link CachedLayer} that was built from {@code layerEntries}, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<CachedLayer> retrieve(ImmutableList<FileEntry> layerEntries)
+  public Optional<CachedLayer> retrieve(ImmutableList<FileEntry> layerEntries, boolean retainSymlinks)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
-        cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));
+        cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries, retainSymlinks));
     if (!optionalSelectedLayerDigest.isPresent()) {
       return Optional.empty();
     }
