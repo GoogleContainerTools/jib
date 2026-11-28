@@ -425,6 +425,13 @@ public class JibPluginTest {
     assertThat(showLabels.getOutput()).contains("jvmFlags value [updated]");
   }
 
+  @Test
+  public void testLazyEvalForEnvironment() {
+    BuildResult showEnvironment = testProject.build("showEnvironment");
+    assertThat(showEnvironment.getOutput())
+        .contains("environment value [firstVar:updated-first-env, secondVar:updated-second-env]");
+  }
+
   private Project createProject(String... plugins) {
     Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();

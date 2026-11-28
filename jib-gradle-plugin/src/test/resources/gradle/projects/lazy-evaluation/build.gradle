@@ -42,6 +42,12 @@ jib {
         filesModificationTime = project.provider { project.ext.jibFilesModificationTime }
         mainClass = project.provider { project.ext.value }
         jvmFlags = project.provider { [project.ext.value] }
+        environment = project.provider {
+            [
+                    firstVar : project.ext.value + '-first-env',
+                    secondVar: project.ext.value + '-second-env'
+            ]
+        }
     }
     extraDirectories {
         paths = project.provider { ['src/main/' + project.ext.value + '-custom-extra-dir'] }
@@ -81,4 +87,9 @@ tasks.register('showMainClass') {
 tasks.register('showJvmFlags') {
     List<String> prop = project.extensions.jib.container.jvmFlags
     println('jvmFlags value ' + prop)
+}
+
+tasks.register('showEnvironment') {
+    Map<String, String> prop = project.extensions.jib.container.environment
+    println('environment value ' + prop)
 }
